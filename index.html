@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3mm 椴木板夾娃娃機 - 雷射切割圖生成器 (ESP32 + N20 + TT馬達 + 8mm光軸)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e293b; color: #f8fafc; }
+        .svg-container { background-color: #fef3c7; background-image: radial-gradient(#d97706 0.5px, transparent 0.5px); background-size: 10px 10px; }
+        svg { width: 100%; height: auto; display: block; }
+        .cut-line { fill: rgba(217, 119, 6, 0.12); stroke: #dc2626; stroke-width: 0.4; }
+        .hole-line { fill: #fef3c7; stroke: #dc2626; stroke-width: 0.4; }
+        .etch-text { fill: #2563eb; font-family: monospace; font-size: 5px; pointer-events: none; }
+        .etch-line { fill: none; stroke: #2563eb; stroke-width: 0.35; stroke-dasharray: 2,1; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-6">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Header -->
+        <div class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="bg-amber-500 text-slate-950 text-xs font-bold px-2.5 py-1 rounded">40×60 雷切機專用 (600×400mm)</span>
+                    <span class="bg-sky-500/20 text-sky-300 border border-sky-500/40 text-xs px-2.5 py-1 rounded">ESP32 + N20四爪 + TT馬達×3 + 8mm光軸</span>
+                </div>
+                <h1 class="text-2xl font-bold text-white mt-2">3mm 椴木板夾娃娃機 - 雷切圖生成器 (DXF / SVG) & 3D 預組裝</h1>
+                <p class="text-xs text-slate-400 mt-1">支援板厚自由選擇與微調、雷射切縫補償 (Kerf)，一鍵匯出 1:1 比例 AutoCAD R12 .DXF 與 .SVG 圖檔</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="downloadDXF('sheet1')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3.5 py-2 rounded-lg shadow transition flex items-center gap-1.5 text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    下載 第 1 張 (600×400) .DXF
+                </button>
+                <button onclick="downloadDXF('sheet2')" class="bg-teal-600 hover:bg-teal-500 text-white font-semibold px-3.5 py-2 rounded-lg shadow transition flex items-center gap-1.5 text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    下載 第 2 張 (600×400) .DXF
+                </button>
+                <button onclick="downloadSVG('sheet1')" class="bg-red-600 hover:bg-red-500 text-white font-semibold px-3.5 py-2 rounded-lg shadow transition flex items-center gap-1.5 text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    下載 第 1 張 .SVG
+                </button>
+                <button onclick="downloadSVG('sheet2')" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold px-3.5 py-2 rounded-lg shadow transition flex items-center gap-1.5 text-xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    下載 第 2 張 .SVG
+                </button>
+            </div>
+        </div>
+
+        <!-- Parameter Controls -->
+        <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Upgraded Board Thickness Selector + Fine-tuning -->
+            <div class="space-y-2 bg-slate-900/70 p-3 rounded-lg border border-amber-500/40">
+                <div class="flex justify-between items-center">
+                    <label class="block text-xs font-bold text-amber-400">1. 板材厚度選擇與微調 (mm)</label>
+                    <span id="effectiveSlotBadge" class="text-[11px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/40 font-mono">實切槽寬: 3.00mm</span>
+                </div>
+
+                <!-- Preset Quick Buttons -->
+                <div class="flex flex-wrap gap-1">
+                    <button type="button" onclick="setBoardThickness(2.7)" class="px-2 py-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-600 transition">2.7mm</button>
+                    <button type="button" onclick="setBoardThickness(2.85)" class="px-2 py-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-600 transition">2.85mm</button>
+                    <button type="button" onclick="setBoardThickness(3.0)" class="px-2 py-1 text-[11px] bg-amber-600 hover:bg-amber-500 text-white font-bold rounded border border-amber-400 transition">3.0mm 標準</button>
+                    <button type="button" onclick="setBoardThickness(3.15)" class="px-2 py-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-600 transition">3.15mm</button>
+                    <button type="button" onclick="setBoardThickness(4.0)" class="px-2 py-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-600 transition">4.0mm</button>
+                    <button type="button" onclick="setBoardThickness(5.0)" class="px-2 py-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-600 transition">5.0mm</button>
+                </div>
+
+                <!-- Fine-tune Stepper + Number Input + Range Slider -->
+                <div class="flex items-center gap-1.5">
+                    <button type="button" onclick="stepBoardThickness(-0.05)" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-amber-400 font-bold px-2.5 py-1.5 rounded border border-slate-600 text-xs">-0.05</button>
+                    <input type="number" id="thicknessInput" value="3.00" step="0.01" min="1.50" max="6.00" oninput="syncThicknessFromInput()" class="w-full bg-slate-950 border border-slate-600 rounded px-2 py-1.5 text-center text-white font-mono text-sm font-bold">
+                    <button type="button" onclick="stepBoardThickness(0.05)" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-amber-400 font-bold px-2.5 py-1.5 rounded border border-slate-600 text-xs">+0.05</button>
+                </div>
+                <input type="range" id="thicknessSlider" min="2.00" max="5.50" step="0.01" value="3.00" oninput="syncThicknessFromSlider()" class="w-full accent-amber-500 cursor-pointer h-1.5">
+            </div>
+
+            <!-- Kerf Compensation & Fit Fine-tuning -->
+            <div class="space-y-2 bg-slate-900/70 p-3 rounded-lg border border-slate-700">
+                <div class="flex justify-between items-center">
+                    <label class="block text-xs font-bold text-sky-400">2. 榫卯鬆緊 / 雷射切縫微調 (Kerf)</label>
+                    <span id="kerfValLbl" class="text-[11px] font-mono text-sky-300">0.00 mm</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <button type="button" onclick="stepKerf(-0.02)" class="bg-slate-800 hover:bg-slate-700 text-sky-400 font-bold px-2 py-1 rounded border border-slate-600 text-xs">更緊 -0.02</button>
+                    <input type="number" id="kerfInput" value="0.00" step="0.01" min="-0.40" max="0.40" oninput="renderAll()" class="w-full bg-slate-950 border border-slate-600 rounded px-2 py-1 text-center text-white font-mono text-sm">
+                    <button type="button" onclick="stepKerf(0.02)" class="bg-slate-800 hover:bg-slate-700 text-sky-400 font-bold px-2 py-1 rounded border border-slate-600 text-xs">更鬆 +0.02</button>
+                </div>
+                <span class="block text-[11px] text-slate-400 leading-tight">
+                    • 設 <b>負值 (如 -0.08)</b>：槽孔縮小，免膠水緊配卡合<br>
+                    • 設 <b>正值 (如 +0.05)</b>：槽孔放大，方便輕鬆插拔
+                </span>
+            </div>
+
+            <!-- 8mm Rod Hole Fine-tuning -->
+            <div class="space-y-2 bg-slate-900/70 p-3 rounded-lg border border-slate-700">
+                <label class="block text-xs font-bold text-emerald-400">3. 8mm 光軸固定孔徑微調 (mm)</label>
+                <div class="flex items-center gap-1.5">
+                    <button type="button" onclick="stepRodHole(-0.05)" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold px-2.5 py-1 rounded border border-slate-600 text-xs">-0.05</button>
+                    <input type="number" id="rodHoleInput" value="7.95" step="0.01" min="7.50" max="8.50" oninput="renderAll()" class="w-full bg-slate-950 border border-slate-600 rounded px-2 py-1 text-center text-white font-mono text-sm">
+                    <button type="button" onclick="stepRodHole(0.05)" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold px-2.5 py-1 rounded border border-slate-600 text-xs">+0.05</button>
+                </div>
+                <div class="pt-1">
+                    <label class="block text-[11px] text-slate-400 mb-1">藍線標註層 (ETCH)</label>
+                    <select id="showLabels" onchange="renderAll()" class="w-full bg-slate-950 border border-slate-600 rounded px-2 py-1 text-white text-xs">
+                        <option value="true">顯示零件名稱與板厚標記</option>
+                        <option value="false">隱藏文字 (僅輸出純切割線)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-700 text-xs space-y-1.5 flex flex-col justify-between">
+                <div>
+                    <div class="font-semibold text-amber-400 mb-1">雷射切割與板厚實測小撇步：</div>
+                    <div class="text-slate-300 leading-relaxed">市售「3mm 椴木板」隨濕度與批號不同，實測常落在 <b>2.75mm ~ 3.15mm</b> 之間。建議先用游標卡尺量測後，點選左側按鈕或微調滑桿。</div>
+                </div>
+                <div class="text-[11px] text-emerald-400 font-mono border-t border-slate-700 pt-1.5" id="liveSpecSummary">
+                    目前設定：板厚 3.00mm | 3層滑塊總厚 9.00mm
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex flex-wrap border-b border-slate-700 gap-2">
+            <button onclick="switchTab('tab3d')" id="btn-tab3d" class="px-5 py-2.5 font-semibold text-sm rounded-t-lg bg-amber-500 text-slate-950 flex items-center gap-2">
+                <span>🧊 互動式 3D 預組裝立體圖 (含爆炸分解與夾爪模擬)</span>
+            </button>
+            <button onclick="switchTab('tab1')" id="btn-tab1" class="px-5 py-2.5 font-semibold text-sm rounded-t-lg bg-slate-800 text-slate-300 hover:bg-slate-700">
+                第 1 張板材 [600×400mm]：機台外箱主體
+            </button>
+            <button onclick="switchTab('tab2')" id="btn-tab2" class="px-5 py-2.5 font-semibold text-sm rounded-t-lg bg-slate-800 text-slate-300 hover:bg-slate-700">
+                第 2 張板材 [600×400mm]：平台底板 + XY天車 + N20四爪機構
+            </button>
+            <button onclick="switchTab('tab3')" id="btn-tab3" class="px-5 py-2.5 font-semibold text-sm rounded-t-lg bg-slate-800 text-slate-300 hover:bg-slate-700">
+                組裝立體爆炸邏輯與五金清單
+            </button>
+        </div>
+
+        <!-- Tab 3D: Interactive 3D Pre-assembly & Exploded View -->
+        <div id="tab3d" class="space-y-4">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <!-- Left 3D Canvas -->
+                <div class="lg:col-span-3 relative bg-slate-900 rounded-xl overflow-hidden shadow-2xl border-2 border-slate-700" style="height: 560px;">
+                    <div id="three-canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+                    
+                    <!-- Top-left Legend Overlay -->
+                    <div class="absolute top-3 left-3 bg-slate-950/85 backdrop-blur px-3.5 py-2.5 rounded-lg border border-slate-700 text-xs space-y-1.5 pointer-events-none">
+                        <div class="font-bold text-amber-400 mb-1">3D 零件材質圖例 (1:1 比例毫米建模)</div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm inline-block" style="background:#deb887; border:1px solid #8b5a2b;"></span> 3mm 椴木合板 (含雷切燒灼邊緣)</div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm inline-block" style="background:#cbd5e1;"></span> 8mm 不鏽鋼圓棒光軸 × 4支</div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm inline-block" style="background:#eab308;"></span> 黃色 TT 雙軸減速馬達 × 3顆 (X/Y/Z)</div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm inline-block" style="background:#94a3b8; border:1px solid #d97706;"></span> N20 微型金屬減速馬達 (夾爪驅動)</div>
+                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm inline-block" style="background:#10b981;"></span> ESP32 控制板 + 街機搖桿按鈕 + 拉線</div>
+                    </div>
+
+                    <!-- Bottom Controls Hint -->
+                    <div class="absolute bottom-3 left-3 right-3 flex flex-wrap justify-between items-center bg-slate-950/80 backdrop-blur px-4 py-2 rounded-lg border border-slate-800 text-xs text-slate-300">
+                        <span>🖱️ <b>左鍵拖曳 / 單指滑動：</b>360° 旋轉視角 | <b>滾輪：</b>縮放大小</span>
+                        <div class="flex gap-2 mt-1 sm:mt-0">
+                            <button onclick="setCameraPreset('iso')" class="bg-slate-800 hover:bg-slate-700 text-amber-400 px-2.5 py-1 rounded border border-slate-600">等角立體視角</button>
+                            <button onclick="setCameraPreset('front')" class="bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1 rounded border border-slate-600">正視圖</button>
+                            <button onclick="setCameraPreset('top')" class="bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1 rounded border border-slate-600">天車俯視圖</button>
+                            <button onclick="setCameraPreset('claw')" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2.5 py-1 rounded border border-slate-600">特寫 N20 夾爪與天車</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Control Panel for 3D Simulation -->
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col justify-between space-y-4">
+                    <div class="space-y-4">
+                        <div class="border-b border-slate-700 pb-2">
+                            <h3 class="font-bold text-amber-400 text-base">預組裝與機構動態控制台</h3>
+                            <p class="text-xs text-slate-400 mt-0.5">調整下方滑桿可檢查榫卯組裝與線驅動運動</p>
+                        </div>
+
+                        <!-- Explode Slider -->
+                        <div class="bg-slate-900/90 p-3 rounded-lg border border-amber-500/40">
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span class="text-amber-300">💥 3D 爆炸分解視圖 (Explode)</span>
+                                <span id="explodeValLbl" class="font-mono text-amber-400">0%</span>
+                            </div>
+                            <input type="range" id="explodeSlider" min="0" max="100" value="0" oninput="update3DState()" class="w-full accent-amber-500 cursor-pointer">
+                            <div class="flex justify-between text-[11px] text-slate-400 mt-1">
+                                <span>緊密組裝 (0%)</span>
+                                <span>完全拆解展示 (100%)</span>
+                            </div>
+                        </div>
+
+                        <!-- X / Y / Z / Claw Controls -->
+                        <div class="space-y-3 bg-slate-900/60 p-3 rounded-lg border border-slate-700">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span>↔️ <b>X 軸天車位置</b> (TT馬達1拉線)</span>
+                                    <span id="xPosLbl" class="font-mono text-sky-400">0 mm</span>
+                                </div>
+                                <input type="range" id="xPosSlider" min="-48" max="48" value="10" oninput="update3DState()" class="w-full accent-sky-500 cursor-pointer">
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span>↕️ <b>Y 軸前後位置</b> (TT馬達2拉線)</span>
+                                    <span id="yPosLbl" class="font-mono text-sky-400">0 mm</span>
+                                </div>
+                                <input type="range" id="yPosSlider" min="-48" max="48" value="-10" oninput="update3DState()" class="w-full accent-sky-500 cursor-pointer">
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span>⬇️ <b>Z 軸吊線升降</b> (TT馬達3捲線)</span>
+                                    <span id="zPosLbl" class="font-mono text-emerald-400">25 mm</span>
+                                </div>
+                                <input type="range" id="zPosSlider" min="5" max="95" value="25" oninput="update3DState()" class="w-full accent-emerald-500 cursor-pointer">
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span>🦀 <b>N20 十字四連桿四爪開合</b></span>
+                                    <span id="clawOpenLbl" class="font-mono text-rose-400">張開 70%</span>
+                                </div>
+                                <input type="range" id="clawOpenSlider" min="0" max="100" value="70" oninput="update3DState()" class="w-full accent-rose-500 cursor-pointer">
+                            </div>
+                        </div>
+
+                        <!-- Visibility & Demo Toggles -->
+                        <div class="space-y-2 pt-1">
+                            <button onclick="toggleAutoDemo()" id="btnAutoDemo" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-lg shadow text-xs transition flex items-center justify-center gap-2">
+                                <span>▶️ 自動模擬「夾娃娃取物全流程」動畫</span>
+                            </button>
+                            <div class="flex items-center justify-between text-xs bg-slate-900 px-3 py-2 rounded border border-slate-700">
+                                <span>半透明化外箱木板 (透視內部機構)</span>
+                                <input type="checkbox" id="xrayToggle" onchange="update3DState()" class="w-4 h-4 accent-amber-500 rounded cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-[11px] text-slate-400 bg-slate-900/90 p-2.5 rounded border border-slate-700 leading-relaxed">
+                        💡 <b>機構檢視重點：</b>開啟「半透明外箱」並點擊「特寫 N20 夾爪與天車」，即可清楚看見 <b>3層疊合Y軸滑塊</b> 如何夾住 <b>8mm光軸</b>，以及 <b>TT馬達三明治捲線輪</b> 如何透過編織線牽引天車與夾爪。
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sheet 1: 600x400mm Cabinet Walls -->
+        <div id="tab1" class="space-y-3 hidden">
+            <div class="flex justify-between items-center text-xs text-slate-300 bg-slate-800/60 px-4 py-2 rounded">
+                <span>雷切機床幅：<b>600 mm × 400 mm (4060 標準機型)</b></span>
+                <span>包含：左側板、右側板、正面板(搖桿/按鈕/螢幕孔)、X/Y馬達頂部橫樑(2支)、出物口滑道擋板(2片)</span>
+            </div>
+            <div class="svg-container rounded-xl overflow-hidden shadow-2xl border-4 border-slate-700 p-2" id="sheet1-wrapper"></div>
+        </div>
+
+        <!-- Sheet 2: 600x400mm Decks + All Core Mechanisms -->
+        <div id="tab2" class="space-y-3 hidden">
+            <div class="flex justify-between items-center text-xs text-slate-300 bg-slate-800/60 px-4 py-2 rounded">
+                <span>雷切機床幅：<b>600 mm × 400 mm (4060 標準機型)</b></span>
+                <span>包含：背面板、獎品檯面中隔板、機台底板、出物口斜坡、Y軸三層滑塊(6片)、X軸天車組、TT馬達座與捲線輪(3組)、N20四爪機構</span>
+            </div>
+            <div class="svg-container rounded-xl overflow-hidden shadow-2xl border-4 border-slate-700 p-2" id="sheet2-wrapper"></div>
+        </div>
+
+        <!-- Tab 3: Assembly Guide -->
+        <div id="tab3" class="hidden bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-6">
+            <h2 class="text-xl font-bold text-amber-400">3mm 椴木板疊層強化設計說明 (為什麼這樣設計？)</h2>
+            <p class="text-sm text-slate-300 leading-relaxed">
+                單層 3mm 椴木板若直接穿過 8mm 光軸，接觸面積僅有 3mm，滑動時容易產生「斜向卡死（Binding）」或磨損鬆動。因此本圖紙採用<b>「三明治三層疊合結構（3mm × 3層 = 9mm 厚）」</b>處理所有關鍵滑塊與捲線器：
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                    <h3 class="font-bold text-white mb-2">1. 8mm 光軸與滑塊配合</h3>
+                    <ul class="list-disc list-inside text-slate-300 space-y-1.5 text-xs">
+                        <li><b>Y軸光軸 (固定於左右側板)：</b> 側板上方開有 <code class="text-amber-400">7.95mm</code> 孔並搭配外鎖擋片，插入兩根 194mm 長的 8mm 圓棒。</li>
+                        <li><b>Y軸滑塊 (左右各1組)：</b> 每組由 3 片 3mm 椴木板用 M3 螺絲鎖緊疊合，內部預留 <code class="text-amber-400">8.45mm</code> 木質自潤滑孔套組（塗抹凡士林或石蠟即可順暢滑動）。</li>
+                        <li><b>X軸光軸：</b> 穿過左右兩個 Y 軸滑塊的 <code class="text-amber-400">7.95mm</code> 緊配孔，構成 H 型天車橋架。</li>
+                    </ul>
+                </div>
+                <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                    <h3 class="font-bold text-white mb-2">2. TT馬達與三明治捲線輪 (×3組)</h3>
+                    <ul class="list-disc list-inside text-slate-300 space-y-1.5 text-xs">
+                        <li><b>TT馬達固定架：</b> 專為雙軸黃色 TT 減速馬達開孔，預留兩顆 M3×30mm 螺絲孔與防轉卡槽。</li>
+                        <li><b>三層夾心線軸 (Spool)：</b> 由 2 片大外圓擋片 (Ø30mm) + 1 片中間捲線芯 (Ø18mm) 黏合而成，中間為 <b>5.4mm × 3.7mm 雙扁孔</b>，可直接緊配壓入 TT 馬達白色輸出軸。</li>
+                        <li><b>拉線驅動：</b> 使用 0.4mm~0.6mm 高強度編織釣魚線（PE線），透過滑輪構成閉迴路拉動 X 軸與 Y 軸，Z 軸則直接收放吊線控制夾爪升降。</li>
+                    </ul>
+                </div>
+                <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                    <h3 class="font-bold text-white mb-2">3. N20 微型馬達「十字四爪」機構</h3>
+                    <ul class="list-disc list-inside text-slate-300 space-y-1.5 text-xs">
+                        <li><b>十字正交主體架 (Cross Frame)：</b> 利用兩片帶有上下對插槽（Slot-in-Slot）的 3mm 椴木板正交 90° 卡合成十字立體骨架，上方搭配方形鎖緊環抱住 N20 減速馬達 (10×12mm)。</li>
+                        <li><b>四向同步連桿滑塊：</b> N20 轉軸捲動拉線或偏心輪，帶動中央「十字四向滑塊環」上下滑動，透過 <b>8 支連桿（每爪雙連桿防側偏）</b> 同步牽引前、後、左、右 <b>4 支弧形夾爪</b> 開合！</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            ['tab3d', 'tab1', 'tab2', 'tab3'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+                const btn = document.getElementById('btn-' + id);
+                btn.classList.remove('bg-amber-500', 'text-slate-950');
+                btn.classList.add('bg-slate-800', 'text-slate-300');
+            });
+            document.getElementById(tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.remove('bg-slate-800', 'text-slate-300');
+            activeBtn.classList.add('bg-amber-500', 'text-slate-950');
+            if (tabId === 'tab3d' && typeof onResize3D === 'function') {
+                setTimeout(onResize3D, 50);
+            }
+        }
+
+        function rect(x, y, w, h, r = 0, cls = 'cut-line') {
+            return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" class="${cls}" />`;
+        }
+        function circle(cx, cy, r, cls = 'hole-line') {
+            return `<circle cx="${cx}" cy="${cy}" r="${r}" class="${cls}" />`;
+        }
+        function text(x, y, str, show) {
+            if (!show) return '';
+            return `<text x="${x}" y="${y}" class="etch-text">${str}</text>`;
+        }
+
+        function ttShaftHole(cx, cy) {
+            const rx = 2.7, ry = 1.85;
+            return `<rect x="${cx - rx}" y="${cy - ry}" width="${rx * 2}" height="${ry * 2}" rx="0.8" class="hole-line" />`;
+        }
+
+        function n20ShaftHole(cx, cy) {
+            return circle(cx, cy, 1.5, 'hole-line');
+        }
+
+        function generateSheet1(t, rodD, showLbl) {
+            const rodR = rodD / 2;
+            const m3R = 1.6;
+            let s = `<svg id="svg-sheet1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600mm" height="400mm">`;
+            s += `<rect x="1" y="1" width="598" height="398" fill="none" stroke="#94a3b8" stroke-width="0.4" stroke-dasharray="4,2" />`;
+            s += text(6, 9, `SHEET 1 (600x400mm / 4060 LASER): LEFT/RIGHT SIDE WALLS + FRONT PANEL + TOP MOTOR BEAMS (t=${t}mm, Rod=${rodD}mm)`, showLbl);
+
+            for (let i = 0; i < 2; i++) {
+                const sx = 6 + i * 194;
+                const sy = 14;
+                const sw = 188, sh = 320;
+                s += rect(sx, sy, sw, sh, 2, 'cut-line');
+                s += rect(sx + 20, sy + 42, sw - 40, 165, 6, 'hole-line');
+                s += circle(sx + 20, sy + 22, rodR);
+                s += circle(sx + sw - 20, sy + 22, rodR);
+                s += circle(sx + 20, sy + 10, m3R);
+                s += circle(sx + sw - 20, sy + 10, m3R);
+                s += rect(sx + 25, sy + 220, 30, t, 0, 'hole-line');
+                s += rect(sx + 133, sy + 220, 30, t, 0, 'hole-line');
+                s += rect(sx + 25, sy + sh - 12 - t, 30, t, 0, 'hole-line');
+                s += rect(sx + 133, sy + sh - 12 - t, 30, t, 0, 'hole-line');
+                s += text(sx + 40, sy + 14, `SIDE PANEL #${i+1} (188x320mm)`, showLbl);
+            }
+
+            const fx = 394, fy = 14, fw = 192, fh = 320;
+            s += rect(fx, fy, fw, fh, 2, 'cut-line');
+            s += rect(fx + 18, fy + 38, fw - 36, 170, 6, 'hole-line');
+            s += rect(fx + 20, fy + 232, 64, 68, 4, 'hole-line');
+            const jx = fx + 118, jy = fy + 266;
+            s += circle(jx, jy, 12.0);
+            s += circle(jx - 16, jy - 20, m3R);
+            s += circle(jx + 16, jy - 20, m3R);
+            s += circle(jx - 16, jy + 20, m3R);
+            s += circle(jx + 16, jy + 20, m3R);
+            s += circle(fx + 160, fy + 266, 12.0);
+            s += rect(fx + 125, fy + 228, 26, 14, 1, 'hole-line');
+            s += rect(fx + 25, fy + 216, 30, t, 0, 'hole-line');
+            s += rect(fx + 137, fy + 216, 30, t, 0, 'hole-line');
+            s += rect(fx + 25, fy + fh - 12 - t, 30, t, 0, 'hole-line');
+            s += rect(fx + 137, fy + fh - 12 - t, 30, t, 0, 'hole-line');
+            s += text(fx + 42, fy + 14, `FRONT PANEL (192x320mm)`, showLbl);
+            s += text(fx + 28, fy + 268, `PRIZE DOOR`, showLbl);
+
+            for (let i = 0; i < 2; i++) {
+                const bx = 6 + i * 190;
+                const by = 340;
+                s += rect(bx, by, 182, 48, 2, 'cut-line');
+                s += circle(bx + 25, by + 24, m3R);
+                s += circle(bx + 157, by + 24, m3R);
+                s += text(bx + 35, by + 26, `TOP BEAM #${i+1} (182x48mm)`, showLbl);
+            }
+            for (let i = 0; i < 2; i++) {
+                const cx = 388 + i * 102;
+                const cy = 340;
+                s += rect(cx, cy, 96, 48, 2, 'cut-line');
+                s += text(cx + 15, cy + 26, `CHUTE WALL #${i+1}`, showLbl);
+            }
+
+            s += `</svg>`;
+            return s;
+        }
+
+        function generateSheet2(t, rodD, showLbl) {
+            const rodR = rodD / 2;
+            const slideR = (rodD + 0.5) / 2;
+            const m3R = 1.6;
+            let s = `<svg id="svg-sheet2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600mm" height="400mm">`;
+            s += `<rect x="1" y="1" width="598" height="398" fill="none" stroke="#94a3b8" stroke-width="0.4" stroke-dasharray="4,2" />`;
+            s += text(6, 9, `SHEET 2 (600x400mm / 4060 LASER): BACK PANEL + FLOORS + XY GANTRY + TT SPOOLS + N20 CLAW (t=${t}mm)`, showLbl);
+
+            const bx = 6, by = 14, bw = 192, bh = 320;
+            s += rect(bx, by, bw, bh, 2, 'cut-line');
+            s += rect(bx + 22, by + 38, bw - 44, 165, 6, 'hole-line');
+            s += rect(bx + 25, by + 220, 30, t, 0, 'hole-line');
+            s += rect(bx + 137, by + 220, 30, t, 0, 'hole-line');
+            s += rect(bx + 25, by + bh - 12 - t, 30, t, 0, 'hole-line');
+            s += rect(bx + 137, by + bh - 12 - t, 30, t, 0, 'hole-line');
+            s += rect(bx + 110, by + 245, 55, 45, 4, 'hole-line');
+            for (let v = 0; v < 4; v++) {
+                s += rect(bx + 30, by + 248 + v * 10, 50, 4, 2, 'hole-line');
+            }
+            s += text(bx + 45, by + 14, `BACK PANEL (192x320mm)`, showLbl);
+            s += text(bx + 112, by + 240, `USB / POWER ACCESS`, showLbl);
+
+            s += rect(6, 338, 95, 56, 2, 'cut-line');
+            s += text(18, 368, `PRIZE RAMP (95x56)`, showLbl);
+
+            for (let i = 0; i < 4; i++) {
+                const rx = 108 + (i % 2) * 44;
+                const ry = 340 + Math.floor(i / 2) * 26;
+                s += rect(rx, ry, 40, 22, 3, 'cut-line');
+                s += circle(rx + 20, ry + 11, m3R);
+                s += text(rx + 6, ry + 13, `ROD-CAP`, showLbl);
+            }
+
+            const px = 204, py = 14, pw = 182, ph = 182;
+            s += rect(px, py, pw, ph, 2, 'cut-line');
+            s += rect(px + 16, py + 106, 62, 60, 3, 'hole-line');
+            s += circle(px + 105, py + 40, 1.4);
+            s += circle(px + 153, py + 40, 1.4);
+            s += circle(px + 105, py + 65, 1.4);
+            s += circle(px + 153, py + 65, 1.4);
+            s += circle(px + 105, py + 95, 1.5);
+            s += circle(px + 142, py + 95, 1.5);
+            s += circle(px + 95, py + 140, 8.0);
+            s += text(px + 35, py + 18, `PRIZE DECK FLOOR (182x182mm)`, showLbl);
+            s += text(px + 25, py + 138, `DROP CHUTE`, showLbl);
+            s += text(px + 100, py + 55, `ESP32 MOUNT`, showLbl);
+
+            const bpx = 204, bpy = 202, bpw = 182, bph = 182;
+            s += rect(bpx, bpy, bpw, bph, 2, 'cut-line');
+            s += circle(bpx + 12, bpy + 12, m3R);
+            s += circle(bpx + bpw - 12, bpy + 12, m3R);
+            s += circle(bpx + 12, bpy + bph - 12, m3R);
+            s += circle(bpx + bpw - 12, bpy + bph - 12, m3R);
+            s += text(bpx + 35, bpy + 95, `BOTTOM BASE PLATE (182x182mm)`, showLbl);
+
+            const mx0 = 394;
+
+            for (let i = 0; i < 6; i++) {
+                const sbx = mx0 + i * 33;
+                const sby = 14;
+                const sbw = 31, sbh = 64;
+                s += rect(sbx, sby, sbw, sbh, 2.5, 'cut-line');
+                s += circle(sbx + 15.5, sby + 32, slideR);
+                s += circle(sbx + 15.5, sby + 11, rodR);
+                s += circle(sbx + 15.5, sby + 53, rodR);
+                s += circle(sbx + 5, sby + 11, m3R);
+                s += circle(sbx + 26, sby + 11, m3R);
+                s += circle(sbx + 5, sby + 53, m3R);
+                s += circle(sbx + 26, sby + 53, m3R);
+                s += circle(sbx + 5, sby + 32, 1.0);
+                s += circle(sbx + 26, sby + 32, 1.0);
+                s += text(sbx + 3, sby + 61, `Y-SLD#${i+1}`, showLbl);
+            }
+
+            const cdx = mx0, cdy = 82, cdw = 68, cdh = 58;
+            s += rect(cdx, cdy, cdw, cdh, 3, 'cut-line');
+            s += rect(cdx + 6, cdy + 12, t, 10, 0, 'hole-line');
+            s += rect(cdx + 6, cdy + 36, t, 10, 0, 'hole-line');
+            s += rect(cdx + cdw - 6 - t, cdy + 12, t, 10, 0, 'hole-line');
+            s += rect(cdx + cdw - 6 - t, cdy + 36, t, 10, 0, 'hole-line');
+            s += circle(cdx + 34, cdy + 29, 5.0);
+            s += rect(cdx + 20, cdy + 10, 12, t, 0, 'hole-line');
+            s += rect(cdx + 20, cdy + 48 - t, 12, t, 0, 'hole-line');
+            s += text(cdx + 8, cdy + 55, `X-CARRIAGE`, showLbl);
+
+            for (let i = 0; i < 4; i++) {
+                const rx = mx0 + 72 + (i % 2) * 62;
+                const ry = 82 + Math.floor(i / 2) * 30;
+                s += rect(rx, ry, 58, 27, 2, 'cut-line');
+                s += circle(rx + 12, ry + 13.5, slideR);
+                s += circle(rx + 46, ry + 13.5, slideR);
+                s += rect(rx + 24, ry + 2, 10, t, 0, 'hole-line');
+                s += text(rx + 18, ry + 16, `X-RIB#${i+1}`, showLbl);
+            }
+
+            for (let i = 0; i < 6; i++) {
+                const tx = mx0 + i * 33;
+                const ty = 144;
+                const tw = 31, th = 56;
+                s += rect(tx, ty, tw, th, 2, 'cut-line');
+                s += circle(tx + 15.5, ty + 18, 4.25);
+                s += circle(tx + 15.5, ty + 29.5, 2.0);
+                s += circle(tx + 6.75, ty + 39, m3R);
+                s += circle(tx + 24.25, ty + 39, m3R);
+                s += rect(tx + 9.5, ty + th - t, 12, t, 0, 'hole-line');
+                s += text(tx + 3, ty + 8, `TT-MNT#${i+1}`, showLbl);
+            }
+
+            for (let i = 0; i < 6; i++) {
+                const sx = mx0 + 15 + i * 32;
+                const sy = 218;
+                s += circle(sx, sy, 15, 'cut-line');
+                s += ttShaftHole(sx, sy);
+                s += circle(sx - 6, sy, 1.2);
+                s += circle(sx + 6, sy, 1.2);
+                s += text(sx - 8, sy + 11, `SPL-F`, showLbl);
+            }
+            for (let i = 0; i < 3; i++) {
+                const cx = mx0 + 12 + i * 22;
+                const cy = 246;
+                s += circle(cx, cy, 9, 'cut-line');
+                s += ttShaftHole(cx, cy);
+                s += circle(cx - 6, cy, 1.2);
+                s += circle(cx + 6, cy, 1.2);
+            }
+            for (let i = 0; i < 4; i++) {
+                const plx = mx0 + 82 + i * 22;
+                const ply = 246;
+                s += circle(plx, ply, 9.5, 'cut-line');
+                s += circle(plx, ply, m3R);
+                s += text(plx - 6, ply + 7, `PLY`, showLbl);
+            }
+
+            const ny = 258;
+            for (let i = 0; i < 2; i++) {
+                const fx = mx0 + i * 48;
+                const fy = ny;
+                const fw = 46, fh = 70;
+                s += rect(fx, fy, fw, fh, 3, 'cut-line');
+                s += circle(fx + 23, fy + 5, 1.8);
+                if (i === 0) {
+                    s += rect(fx + 23 - t / 2, fy + 38, t, 32, 0, 'hole-line');
+                } else {
+                    s += rect(fx + 23 - t / 2, fy + 8, t, 30, 0, 'hole-line');
+                }
+                s += rect(fx + 17, fy + 12, 12.1, 24, 0.5, 'hole-line');
+                s += rect(fx + 10, fy + 20, 4, t, 0, 'hole-line');
+                s += rect(fx + 32, fy + 20, 4, t, 0, 'hole-line');
+                s += circle(fx + 6, fy + 62, m3R);
+                s += circle(fx + 40, fy + 62, m3R);
+                s += text(fx + 4, fy + 52, `4JAW-X#${i+1}`, showLbl);
+            }
+
+            for (let i = 0; i < 4; i++) {
+                const gx = mx0 + 96 + i * 26;
+                const gy = ny;
+                const path = `M ${gx+6},${gy+2} L ${gx+18},${gy+2} L ${gx+24},${gy+24} L ${gx+15},${gy+66} L ${gx+4},${gy+67} L ${gx+11},${gy+50} L ${gx+15},${gy+26} L ${gx+5},${gy+14} Z`;
+                s += `<path d="${path}" class="cut-line" />`;
+                s += circle(gx + 12, gy + 8, m3R);
+                s += circle(gx + 18, gy + 24, m3R);
+                s += text(gx + 7, gy + 38, `JAW${i+1}`, showLbl);
+            }
+
+            s += rect(mx0, 333, 28, 24, 2, 'cut-line');
+            s += rect(mx0 + 8, 333 + 7, 12.1, 10.1, 0, 'hole-line');
+            s += text(mx0 + 2, 333 + 5, `N20-LCK`, showLbl);
+
+            const scx = mx0 + 44, scy = 345;
+            s += circle(scx, scy, 13, 'cut-line');
+            s += rect(scx - t / 2, scy - 8, t, 16, 0, 'hole-line');
+            s += rect(scx - 8, scy - t / 2, 16, t, 0, 'hole-line');
+            s += circle(scx - 9.5, scy, m3R);
+            s += circle(scx + 9.5, scy, m3R);
+            s += circle(scx, scy - 9.5, m3R);
+            s += circle(scx, scy + 9.5, m3R);
+            s += text(scx - 9, scy + 11, `4W-SLD`, showLbl);
+
+            const ncx = mx0 + 14, ncy = 376;
+            s += circle(ncx, ncy, 10, 'cut-line');
+            s += n20ShaftHole(ncx, ncy);
+            s += circle(ncx + 6, ncy, 1.2);
+            s += text(ncx - 7, ncy + 8, `CAM`, showLbl);
+
+            for (let i = 0; i < 8; i++) {
+                const lbx = mx0 + 62 + (i % 3) * 46;
+                const lby = 333 + Math.floor(i / 3) * 21;
+                s += rect(lbx, lby, 44, 10, 5, 'cut-line');
+                s += circle(lbx + 5, lby + 5, m3R);
+                s += circle(lbx + 39, lby + 5, m3R);
+                s += text(lbx + 10, lby + 6.5, `LNK#${i+1}`, showLbl);
+            }
+
+            s += `</svg>`;
+            return s;
+        }
+
+        function setBoardThickness(val) {
+            const formatted = parseFloat(val).toFixed(2);
+            document.getElementById('thicknessInput').value = formatted;
+            document.getElementById('thicknessSlider').value = formatted;
+            renderAll();
+        }
+
+        function stepBoardThickness(delta) {
+            const cur = parseFloat(document.getElementById('thicknessInput').value) || 3.0;
+            const next = Math.max(1.5, Math.min(6.0, cur + delta));
+            setBoardThickness(next);
+        }
+
+        function syncThicknessFromInput() {
+            const val = parseFloat(document.getElementById('thicknessInput').value);
+            if (!isNaN(val)) {
+                document.getElementById('thicknessSlider').value = Math.max(2.0, Math.min(5.5, val));
+                renderAll();
+            }
+        }
+
+        function syncThicknessFromSlider() {
+            const val = parseFloat(document.getElementById('thicknessSlider').value);
+            document.getElementById('thicknessInput').value = val.toFixed(2);
+            renderAll();
+        }
+
+        function stepKerf(delta) {
+            const cur = parseFloat(document.getElementById('kerfInput').value) || 0.0;
+            const next = Math.max(-0.4, Math.min(0.4, cur + delta));
+            document.getElementById('kerfInput').value = next.toFixed(2);
+            renderAll();
+        }
+
+        function stepRodHole(delta) {
+            const cur = parseFloat(document.getElementById('rodHoleInput').value) || 7.95;
+            const next = Math.max(7.5, Math.min(8.5, cur + delta));
+            document.getElementById('rodHoleInput').value = next.toFixed(2);
+            renderAll();
+        }
+
+        function getEffectiveSlotThickness() {
+            const rawT = parseFloat(document.getElementById('thicknessInput').value) || 3.0;
+            const kerf = parseFloat(document.getElementById('kerfInput')?.value) || 0.0;
+            return Math.max(1.0, parseFloat((rawT + kerf).toFixed(3)));
+        }
+
+        function renderAll() {
+            const rawT = parseFloat(document.getElementById('thicknessInput').value) || 3.0;
+            const kerf = parseFloat(document.getElementById('kerfInput')?.value) || 0.0;
+            const slotT = getEffectiveSlotThickness();
+            const rodD = parseFloat(document.getElementById('rodHoleInput').value) || 7.95;
+            const showLbl = document.getElementById('showLabels').value === 'true';
+
+            const badge = document.getElementById('effectiveSlotBadge');
+            if (badge) badge.textContent = `實切槽寬: ${slotT.toFixed(2)}mm`;
+            const kerfLbl = document.getElementById('kerfValLbl');
+            if (kerfLbl) kerfLbl.textContent = `${kerf >= 0 ? '+' : ''}${kerf.toFixed(2)} mm`;
+            const summary = document.getElementById('liveSpecSummary');
+            if (summary) summary.textContent = `目前設定：板厚 ${rawT.toFixed(2)}mm | 實切槽寬 ${slotT.toFixed(2)}mm | 3層滑塊總厚 ${(rawT * 3).toFixed(2)}mm`;
+
+            document.getElementById('sheet1-wrapper').innerHTML = generateSheet1(slotT, rodD, showLbl);
+            document.getElementById('sheet2-wrapper').innerHTML = generateSheet2(slotT, rodD, showLbl);
+
+            if (typeof update3DBoardThickness === 'function') {
+                update3DBoardThickness(rawT);
+            }
+        }
+
+        function downloadSVG(sheet) {
+            const svgId = sheet === 'sheet1' ? 'svg-sheet1' : 'svg-sheet2';
+            const svgEl = document.getElementById(svgId);
+            const slotT = getEffectiveSlotThickness().toFixed(2);
+            const style = `<style>
+                .cut-line { fill: none; stroke: #ff0000; stroke-width: 0.1mm; }
+                .hole-line { fill: none; stroke: #ff0000; stroke-width: 0.1mm; }
+                .etch-text { fill: none; stroke: #0000ff; stroke-width: 0.1mm; font-family: sans-serif; font-size: 4px; }
+                .etch-line { fill: none; stroke: #0000ff; stroke-width: 0.1mm; }
+            </style>`;
+            const clone = svgEl.cloneNode(true);
+            clone.insertAdjacentHTML('afterbegin', style);
+            const serializer = new XMLSerializer();
+            let source = serializer.serializeToString(clone);
+            source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
+
+            const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `ClawMachine_3mm_Basswood_${sheet}_slot${slotT}mm.svg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadDXF(sheet) {
+            const svgId = sheet === 'sheet1' ? 'svg-sheet1' : 'svg-sheet2';
+            const svgEl = document.getElementById(svgId);
+            const slotT = getEffectiveSlotThickness().toFixed(2);
+            const H = 400.0;
+
+            let dxf = [];
+            const push = (...lines) => lines.forEach(l => dxf.push(String(l)));
+
+            push(
+                0, 'SECTION', 2, 'HEADER',
+                9, '$INSUNITS', 70, 4,
+                0, 'ENDSEC',
+                0, 'SECTION', 2, 'TABLES',
+                0, 'TABLE', 2, 'LAYER', 70, 2,
+                0, 'LAYER', 2, 'CUT', 70, 0, 62, 1, 6, 'CONTINUOUS',
+                0, 'LAYER', 2, 'ETCH', 70, 0, 62, 5, 6, 'CONTINUOUS',
+                0, 'ENDTAB',
+                0, 'ENDSEC',
+                0, 'SECTION', 2, 'ENTITIES'
+            );
+
+            function addDxfLine(x1, y1, x2, y2, layer = 'CUT') {
+                push(
+                    0, 'LINE', 8, layer,
+                    10, x1.toFixed(3), 20, (H - y1).toFixed(3), 30, '0.0',
+                    11, x2.toFixed(3), 21, (H - y2).toFixed(3), 31, '0.0'
+                );
+            }
+
+            function addDxfCircle(cx, cy, r, layer = 'CUT') {
+                push(
+                    0, 'CIRCLE', 8, layer,
+                    10, cx.toFixed(3), 20, (H - cy).toFixed(3), 30, '0.0',
+                    40, r.toFixed(3)
+                );
+            }
+
+            function addDxfText(x, y, str, layer = 'ETCH') {
+                const clean = str.replace(/[^\x20-\x7E]/g, '');
+                if (!clean) return;
+                push(
+                    0, 'TEXT', 8, layer,
+                    10, x.toFixed(3), 20, (H - y).toFixed(3), 30, '0.0',
+                    40, '3.5', 1, clean
+                );
+            }
+
+            svgEl.querySelectorAll('rect, circle, path, text').forEach(el => {
+                const tag = el.tagName.toLowerCase();
+                const cls = el.getAttribute('class') || '';
+                const isBorder = el.getAttribute('stroke-dasharray') !== null && !cls.includes('cut');
+                const layer = (cls.includes('etch') || isBorder) ? 'ETCH' : 'CUT';
+
+                if (tag === 'circle') {
+                    const cx = parseFloat(el.getAttribute('cx'));
+                    const cy = parseFloat(el.getAttribute('cy'));
+                    const r = parseFloat(el.getAttribute('r'));
+                    addDxfCircle(cx, cy, r, layer);
+                } else if (tag === 'rect') {
+                    const x = parseFloat(el.getAttribute('x'));
+                    const y = parseFloat(el.getAttribute('y'));
+                    const w = parseFloat(el.getAttribute('width'));
+                    const h = parseFloat(el.getAttribute('height'));
+                    addDxfLine(x, y, x + w, y, layer);
+                    addDxfLine(x + w, y, x + w, y + h, layer);
+                    addDxfLine(x + w, y + h, x, y + h, layer);
+                    addDxfLine(x, y + h, x, y, layer);
+                } else if (tag === 'path') {
+                    const d = el.getAttribute('d') || '';
+                    const pts = [...d.matchAll(/([ML])\s*([\d.]+)\s*,\s*([\d.]+)/gi)].map(m => ({
+                        x: parseFloat(m[2]),
+                        y: parseFloat(m[3])
+                    }));
+                    for (let i = 0; i < pts.length; i++) {
+                        const p1 = pts[i];
+                        const p2 = pts[(i + 1) % pts.length];
+                        addDxfLine(p1.x, p1.y, p2.x, p2.y, layer);
+                    }
+                } else if (tag === 'text') {
+                    const x = parseFloat(el.getAttribute('x'));
+                    const y = parseFloat(el.getAttribute('y'));
+                    addDxfText(x, y, el.textContent || '', 'ETCH');
+                }
+            });
+
+            push(0, 'ENDSEC', 0, 'EOF');
+
+            const blob = new Blob([dxf.join('\r\n')], { type: 'application/dxf;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ClawMachine_4060_3mm_Basswood_${sheet}_slot${slotT}mm.dxf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        let scene, camera, renderer;
+        let cabinetGroup, leftWallGroup, rightWallGroup, frontWallGroup, backWallGroup;
+        let prizeDeckGroup, basePlateGroup, topBeamsGroup;
+        let yAxisAssembly, xCarriageAssembly, zClawAssembly;
+        let fourJawPivots = [], fourJawLinks = [], clawSliderMesh;
+        let zLiftLineGeo, zLiftLineMesh;
+        let woodMaterial, woodTransparentMat, laserEdgeMat, steelRodMat, ttMotorYellowMat, n20MetalMat;
+        let isAutoDemo = false;
+        let demoClock = 0;
+
+        let camRadius = 460;
+        let camTheta = 0.68;
+        let camPhi = 1.15;
+        let camTarget = new THREE.Vector3(0, 15, 0);
+        let isDragging = false;
+        let prevMouse = { x: 0, y: 0 };
+
+        let allWoodBoards = [];
+        function createWoodBoard(w, h, d, mat) {
+            const group = new THREE.Group();
+            const geo = new THREE.BoxGeometry(w, h, d);
+            const mesh = new THREE.Mesh(geo, mat || woodMaterial);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            group.add(mesh);
+
+            const edges = new THREE.EdgesGeometry(geo);
+            const line = new THREE.LineSegments(edges, laserEdgeMat);
+            group.add(line);
+
+            const minDim = Math.min(w, h, d);
+            let thickAxis = 'z';
+            if (w === minDim) thickAxis = 'x';
+            else if (h === minDim) thickAxis = 'y';
+            group.userData = { baseThickness: 3.0, thickAxis, isMultiLayer: (minDim === 9) };
+            allWoodBoards.push(group);
+
+            return group;
+        }
+
+        function update3DBoardThickness(newT) {
+            if (!allWoodBoards || !allWoodBoards.length) return;
+            const ratio = newT / 3.0;
+            allWoodBoards.forEach(b => {
+                const axis = b.userData.thickAxis;
+                if (axis === 'x') b.scale.x = ratio;
+                else if (axis === 'y') b.scale.y = ratio;
+                else b.scale.z = ratio;
+            });
+        }
+
+        function createFramedWall(totalW, totalH, thickness, winX, winY, winW, winH, mat) {
+            const wall = new THREE.Group();
+            const topH = winY;
+            const topBar = createWoodBoard(totalW, topH, thickness, mat);
+            topBar.position.set(0, totalH / 2 - topH / 2, 0);
+            wall.add(topBar);
+
+            const botH = totalH - (winY + winH);
+            const botBar = createWoodBoard(totalW, botH, thickness, mat);
+            botBar.position.set(0, -totalH / 2 + botH / 2, 0);
+            wall.add(botBar);
+
+            const leftW = winX;
+            const leftBar = createWoodBoard(leftW, winH, thickness, mat);
+            leftBar.position.set(-totalW / 2 + leftW / 2, totalH / 2 - winY - winH / 2, 0);
+            wall.add(leftBar);
+
+            const rightW = totalW - (winX + winW);
+            const rightBar = createWoodBoard(rightW, winH, thickness, mat);
+            rightBar.position.set(totalW / 2 - rightW / 2, totalH / 2 - winY - winH / 2, 0);
+            wall.add(rightBar);
+
+            return wall;
+        }
+
+        function createTTMotorWithSpool() {
+            const g = new THREE.Group();
+            const bodyGeo = new THREE.BoxGeometry(36, 20, 18);
+            const bodyMesh = new THREE.Mesh(bodyGeo, ttMotorYellowMat);
+            g.add(bodyMesh);
+
+            const cylGeo = new THREE.CylinderGeometry(9, 9, 20, 16);
+            cylGeo.rotateZ(Math.PI / 2);
+            const cylMesh = new THREE.Mesh(cylGeo, new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.7, roughness: 0.3 }));
+            cylMesh.position.set(-16, 0, 0);
+            g.add(cylMesh);
+
+            const shaftGeo = new THREE.CylinderGeometry(2.7, 2.7, 28, 12);
+            shaftGeo.rotateX(Math.PI / 2);
+            const shaftMesh = new THREE.Mesh(shaftGeo, new THREE.MeshStandardMaterial({ color: 0xffffff }));
+            shaftMesh.position.set(10, 0, 8);
+            g.add(shaftMesh);
+
+            const spoolGroup = new THREE.Group();
+            spoolGroup.position.set(10, 0, 16);
+            const f1Geo = new THREE.CylinderGeometry(15, 15, 3, 24);
+            f1Geo.rotateX(Math.PI / 2);
+            const f1 = new THREE.Mesh(f1Geo, woodMaterial);
+            f1.position.z = -3;
+            const coreGeo = new THREE.CylinderGeometry(9, 9, 3, 20);
+            coreGeo.rotateX(Math.PI / 2);
+            const core = new THREE.Mesh(coreGeo, new THREE.MeshStandardMaterial({ color: 0x38bdf8 }));
+            const f2 = new THREE.Mesh(f1Geo, woodMaterial);
+            f2.position.z = 3;
+            spoolGroup.add(f1, core, f2);
+            g.add(spoolGroup);
+
+            return g;
+        }
+
+        function init3DScene() {
+            const container = document.getElementById('three-canvas-container');
+            if (!container) return;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f172a);
+
+            camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 1, 2500);
+            updateCameraTransform();
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xfffbeb, 0.85);
+            dirLight1.position.set(220, 380, 300);
+            dirLight1.castShadow = true;
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0x93c5fd, 0.4);
+            dirLight2.position.set(-250, 120, -200);
+            scene.add(dirLight2);
+
+            const grid = new THREE.GridHelper(450, 18, 0x334155, 0x1e293b);
+            grid.position.y = -165;
+            scene.add(grid);
+
+            woodMaterial = new THREE.MeshStandardMaterial({
+                color: 0xdeb887,
+                roughness: 0.65,
+                metalness: 0.05
+            });
+            woodTransparentMat = new THREE.MeshStandardMaterial({
+                color: 0xdeb887,
+                roughness: 0.65,
+                transparent: true,
+                opacity: 0.22,
+                depthWrite: false
+            });
+            laserEdgeMat = new THREE.LineBasicMaterial({ color: 0x5c3a21, transparent: true, opacity: 0.7 });
+            steelRodMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.88, roughness: 0.18 });
+            ttMotorYellowMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.4 });
+            n20MetalMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.8, roughness: 0.25 });
+
+            cabinetGroup = new THREE.Group();
+            scene.add(cabinetGroup);
+
+            const t = 3.0;
+
+            leftWallGroup = new THREE.Group();
+            const leftPanel = createFramedWall(188, 320, t, 20, 42, 148, 165, woodMaterial);
+            leftPanel.rotation.y = Math.PI / 2;
+            leftWallGroup.add(leftPanel);
+            const capL1 = createWoodBoard(t, 22, 36, woodMaterial);
+            capL1.position.set(-t, 138, -74);
+            const capL2 = createWoodBoard(t, 22, 36, woodMaterial);
+            capL2.position.set(-t, 138, 74);
+            leftWallGroup.add(capL1, capL2);
+            cabinetGroup.add(leftWallGroup);
+
+            rightWallGroup = new THREE.Group();
+            const rightPanel = createFramedWall(188, 320, t, 20, 42, 148, 165, woodMaterial);
+            rightPanel.rotation.y = Math.PI / 2;
+            rightWallGroup.add(rightPanel);
+            const capR1 = createWoodBoard(t, 22, 36, woodMaterial);
+            capR1.position.set(t, 138, -74);
+            const capR2 = createWoodBoard(t, 22, 36, woodMaterial);
+            capR2.position.set(t, 138, 74);
+            rightWallGroup.add(capR1, capR2);
+            cabinetGroup.add(rightWallGroup);
+
+            frontWallGroup = new THREE.Group();
+            const frontPanel = createFramedWall(192, 320, t, 18, 38, 156, 170, woodMaterial);
+            frontWallGroup.add(frontPanel);
+
+            const joyGroup = new THREE.Group();
+            joyGroup.position.set(22, -102, 8);
+            joyGroup.rotation.x = 0.25;
+            const joyStickShaft = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.5, 28, 12), steelRodMat);
+            joyStickShaft.rotation.x = Math.PI / 2;
+            joyStickShaft.position.z = 10;
+            const joyBall = new THREE.Mesh(new THREE.SphereGeometry(10, 20, 20), new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.2 }));
+            joyBall.position.z = 24;
+            joyGroup.add(joyStickShaft, joyBall);
+            frontWallGroup.add(joyGroup);
+
+            const btnMesh = new THREE.Mesh(
+                new THREE.CylinderGeometry(11, 12, 8, 20),
+                new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.3 })
+            );
+            btnMesh.rotation.x = Math.PI / 2;
+            btnMesh.position.set(62, -102, 4);
+            frontWallGroup.add(btnMesh);
+
+            const oledMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(26, 14, 2),
+                new THREE.MeshStandardMaterial({ color: 0x0284c7, emissive: 0x0369a1, emissiveIntensity: 0.5 })
+            );
+            oledMesh.position.set(42, -76, 2);
+            frontWallGroup.add(oledMesh);
+            cabinetGroup.add(frontWallGroup);
+
+            backWallGroup = new THREE.Group();
+            const backPanel = createFramedWall(192, 320, t, 22, 38, 148, 165, woodMaterial);
+            backWallGroup.add(backPanel);
+            cabinetGroup.add(backWallGroup);
+
+            prizeDeckGroup = new THREE.Group();
+            const floorBoard = createWoodBoard(182, t, 182, woodMaterial);
+            prizeDeckGroup.add(floorBoard);
+
+            const chuteWall1 = createWoodBoard(t, 45, 62, woodMaterial);
+            chuteWall1.position.set(-22, 24, 58);
+            const chuteWall2 = createWoodBoard(64, 45, t, woodMaterial);
+            chuteWall2.position.set(-54, 24, 27);
+            prizeDeckGroup.add(chuteWall1, chuteWall2);
+
+            const prizeColors = [0xf43f5e, 0xa855f7, 0x3b82f6, 0x10b981];
+            const prizeCoords = [[35, 14, 30], [50, 14, -25], [-20, 14, -40], [15, 14, 45]];
+            prizeCoords.forEach((pt, idx) => {
+                const ball = new THREE.Mesh(
+                    new THREE.SphereGeometry(13, 20, 20),
+                    new THREE.MeshStandardMaterial({ color: prizeColors[idx], roughness: 0.3 })
+                );
+                ball.position.set(pt[0], pt[1], pt[2]);
+                prizeDeckGroup.add(ball);
+            });
+
+            const esp32Mesh = new THREE.Mesh(
+                new THREE.BoxGeometry(48, 4, 26),
+                new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.5 })
+            );
+            esp32Mesh.position.set(42, -5, -45);
+            prizeDeckGroup.add(esp32Mesh);
+            cabinetGroup.add(prizeDeckGroup);
+
+            basePlateGroup = new THREE.Group();
+            const baseBoard = createWoodBoard(182, t, 182, woodMaterial);
+            basePlateGroup.add(baseBoard);
+
+            const rampBoard = createWoodBoard(60, t, 88, woodMaterial);
+            rampBoard.position.set(-54, 32, 52);
+            rampBoard.rotation.x = 0.48;
+            basePlateGroup.add(rampBoard);
+            cabinetGroup.add(basePlateGroup);
+
+            topBeamsGroup = new THREE.Group();
+            const yRodGeo = new THREE.CylinderGeometry(4, 4, 194, 20);
+            yRodGeo.rotateX(Math.PI / 2);
+            const yRodLeft = new THREE.Mesh(yRodGeo, steelRodMat);
+            yRodLeft.position.set(-76, 0, 0);
+            const yRodRight = new THREE.Mesh(yRodGeo, steelRodMat);
+            yRodRight.position.set(76, 0, 0);
+            topBeamsGroup.add(yRodLeft, yRodRight);
+
+            const topBeamBack = createWoodBoard(182, 36, t, woodMaterial);
+            topBeamBack.position.set(0, 8, -82);
+            topBeamsGroup.add(topBeamBack);
+
+            const ttMotorY = createTTMotorWithSpool();
+            ttMotorY.position.set(-55, 12, -72);
+            topBeamsGroup.add(ttMotorY);
+            cabinetGroup.add(topBeamsGroup);
+
+            yAxisAssembly = new THREE.Group();
+            cabinetGroup.add(yAxisAssembly);
+
+            const ySliderLeft = createWoodBoard(9, 24, 64, woodMaterial);
+            ySliderLeft.position.set(-76, 0, 0);
+            const ySliderRight = createWoodBoard(9, 24, 64, woodMaterial);
+            ySliderRight.position.set(76, 0, 0);
+            yAxisAssembly.add(ySliderLeft, ySliderRight);
+
+            const xRodGeo = new THREE.CylinderGeometry(4, 4, 156, 20);
+            xRodGeo.rotateZ(Math.PI / 2);
+            const xRodFront = new THREE.Mesh(xRodGeo, steelRodMat);
+            xRodFront.position.set(0, 0, 21);
+            const xRodBack = new THREE.Mesh(xRodGeo, steelRodMat);
+            xRodBack.position.set(0, 0, -21);
+            yAxisAssembly.add(xRodFront, xRodBack);
+
+            const ttMotorX = createTTMotorWithSpool();
+            ttMotorX.position.set(-58, 16, 0);
+            yAxisAssembly.add(ttMotorX);
+
+            xCarriageAssembly = new THREE.Group();
+            yAxisAssembly.add(xCarriageAssembly);
+
+            const xDeck = createWoodBoard(68, t, 58, woodMaterial);
+            xDeck.position.set(0, 8, 0);
+            const xRibLeft = createWoodBoard(t, 22, 54, woodMaterial);
+            xRibLeft.position.set(-26, 0, 0);
+            const xRibRight = createWoodBoard(t, 22, 54, woodMaterial);
+            xRibRight.position.set(26, 0, 0);
+            xCarriageAssembly.add(xDeck, xRibLeft, xRibRight);
+
+            const ttMotorZ = createTTMotorWithSpool();
+            ttMotorZ.position.set(0, 22, -8);
+            xCarriageAssembly.add(ttMotorZ);
+
+            zLiftLineGeo = new THREE.BufferGeometry();
+            const ropeVertices = new Float32Array([0, 12, 0, 0, -35, 0]);
+            zLiftLineGeo.setAttribute('position', new THREE.BufferAttribute(ropeVertices, 3));
+            zLiftLineMesh = new THREE.Line(
+                zLiftLineGeo,
+                new THREE.LineBasicMaterial({ color: 0x38bdf8, linewidth: 2 })
+            );
+            xCarriageAssembly.add(zLiftLineMesh);
+
+            zClawAssembly = new THREE.Group();
+            xCarriageAssembly.add(zClawAssembly);
+
+            const clawPlateX = createWoodBoard(44, 54, t);
+            clawPlateX.position.set(0, -27, 0);
+            const clawPlateZ = createWoodBoard(t, 54, 44);
+            clawPlateZ.position.set(0, -27, 0);
+            zClawAssembly.add(clawPlateX, clawPlateZ);
+
+            const n20Collar = createWoodBoard(28, t, 28);
+            n20Collar.position.set(0, -16, 0);
+            zClawAssembly.add(n20Collar);
+
+            const n20Box = new THREE.Mesh(new THREE.BoxGeometry(12, 22, 10), n20MetalMat);
+            n20Box.position.set(0, -18, 0);
+            const n20Coil = new THREE.Mesh(
+                new THREE.CylinderGeometry(5, 5, 13, 16),
+                new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.7, roughness: 0.3 })
+            );
+            n20Coil.position.set(0, -6, 0);
+            zClawAssembly.add(n20Box, n20Coil);
+
+            const sliderDiscGeo = new THREE.CylinderGeometry(13, 13, t * 1.5, 24);
+            clawSliderMesh = new THREE.Mesh(sliderDiscGeo, woodMaterial);
+            clawSliderMesh.position.set(0, -35, 0);
+            zClawAssembly.add(clawSliderMesh);
+
+            fourJawPivots = [];
+            fourJawLinks = [];
+            for (let i = 0; i < 4; i++) {
+                const yawAngle = (i * Math.PI) / 2;
+                const jawBranch = new THREE.Group();
+                jawBranch.rotation.y = yawAngle;
+                zClawAssembly.add(jawBranch);
+
+                const fingerPivot = new THREE.Group();
+                fingerPivot.position.set(18, -48, 0);
+
+                const upperArm = createWoodBoard(7, 26, t);
+                upperArm.position.set(6, -11, 0);
+                upperArm.rotation.z = 0.36;
+
+                const lowerTip = createWoodBoard(6, 25, t);
+                lowerTip.position.set(7, -30, 0);
+                lowerTip.rotation.z = -0.48;
+
+                fingerPivot.add(upperArm, lowerTip);
+                jawBranch.add(fingerPivot);
+                fourJawPivots.push(fingerPivot);
+
+                const linkBar = createWoodBoard(20, 5.5, t);
+                linkBar.position.set(11, -38, t);
+                jawBranch.add(linkBar);
+                fourJawLinks.push(linkBar);
+            }
+
+            setupOrbitEvents(container);
+            update3DState();
+            animate3D();
+        }
+
+        function updateCameraTransform() {
+            if (!camera) return;
+            camPhi = Math.max(0.15, Math.min(Math.PI - 0.15, camPhi));
+            camera.position.x = camTarget.x + camRadius * Math.sin(camPhi) * Math.sin(camTheta);
+            camera.position.y = camTarget.y + camRadius * Math.cos(camPhi);
+            camera.position.z = camTarget.z + camRadius * Math.sin(camPhi) * Math.cos(camTheta);
+            camera.lookAt(camTarget);
+        }
+
+        function setCameraPreset(preset) {
+            if (preset === 'iso') {
+                camRadius = 460; camTheta = 0.68; camPhi = 1.15;
+                camTarget.set(0, 15, 0);
+            } else if (preset === 'front') {
+                camRadius = 440; camTheta = 0; camPhi = Math.PI / 2;
+                camTarget.set(0, 10, 0);
+            } else if (preset === 'top') {
+                camRadius = 380; camTheta = 0; camPhi = 0.22;
+                camTarget.set(0, 80, 0);
+            } else if (preset === 'claw') {
+                camRadius = 210; camTheta = 0.55; camPhi = 1.22;
+                camTarget.set(0, 85, 0);
+            }
+            updateCameraTransform();
+        }
+
+        function setupOrbitEvents(domEl) {
+            domEl.addEventListener('mousedown', e => {
+                isDragging = true;
+                prevMouse = { x: e.clientX, y: e.clientY };
+            });
+            window.addEventListener('mouseup', () => { isDragging = false; });
+            window.addEventListener('mousemove', e => {
+                if (!isDragging) return;
+                const dx = e.clientX - prevMouse.x;
+                const dy = e.clientY - prevMouse.y;
+                prevMouse = { x: e.clientX, y: e.clientY };
+                camTheta -= dx * 0.008;
+                camPhi -= dy * 0.008;
+                updateCameraTransform();
+            });
+            domEl.addEventListener('wheel', e => {
+                e.preventDefault();
+                camRadius = Math.max(120, Math.min(850, camRadius + e.deltaY * 0.35));
+                updateCameraTransform();
+            }, { passive: false });
+
+            domEl.addEventListener('touchstart', e => {
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                }
+            }, { passive: true });
+            window.addEventListener('touchend', () => { isDragging = false; });
+            window.addEventListener('touchmove', e => {
+                if (!isDragging || e.touches.length !== 1) return;
+                const dx = e.touches[0].clientX - prevMouse.x;
+                const dy = e.touches[0].clientY - prevMouse.y;
+                prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                camTheta -= dx * 0.008;
+                camPhi -= dy * 0.008;
+                updateCameraTransform();
+            });
+        }
+
+        function update3DState() {
+            if (!cabinetGroup) return;
+
+            const explodePct = parseFloat(document.getElementById('explodeSlider').value) || 0;
+            const xPos = parseFloat(document.getElementById('xPosSlider').value) || 0;
+            const yPos = parseFloat(document.getElementById('yPosSlider').value) || 0;
+            const zDrop = parseFloat(document.getElementById('zPosSlider').value) || 25;
+            const clawOpen = parseFloat(document.getElementById('clawOpenSlider').value) || 70;
+            const xray = document.getElementById('xrayToggle').checked;
+
+            document.getElementById('explodeValLbl').textContent = `${Math.round(explodePct)}%`;
+            document.getElementById('xPosLbl').textContent = `${Math.round(xPos)} mm`;
+            document.getElementById('yPosLbl').textContent = `${Math.round(yPos)} mm`;
+            document.getElementById('zPosLbl').textContent = `${Math.round(zDrop)} mm`;
+            document.getElementById('clawOpenLbl').textContent = `${ clawOpen > 50 ? '張開' : '夾緊' } ${Math.round(clawOpen)}%`;
+
+            const ex = explodePct / 100;
+
+            const wallMat = xray ? woodTransparentMat : woodMaterial;
+            [leftWallGroup, rightWallGroup, frontWallGroup, backWallGroup].forEach(grp => {
+                grp.traverse(child => {
+                    if (child.isMesh && (child.material === woodMaterial || child.material === woodTransparentMat)) {
+                        child.material = wallMat;
+                    }
+                });
+            });
+
+            leftWallGroup.position.set(-91 - ex * 95, 0, 0);
+            rightWallGroup.position.set(91 + ex * 95, 0, 0);
+            frontWallGroup.position.set(0, 0, 92.5 + ex * 95);
+            backWallGroup.position.set(0, 0, -92.5 - ex * 95);
+            prizeDeckGroup.position.set(0, -60 - ex * 35, 0);
+            basePlateGroup.position.set(0, -148 - ex * 75, 0);
+            topBeamsGroup.position.set(0, 138 + ex * 70, 0);
+
+            yAxisAssembly.position.set(0, 138 + ex * 42, yPos);
+            xCarriageAssembly.position.set(xPos, ex * 22, 0);
+            zClawAssembly.position.set(0, -zDrop - ex * 25, 0);
+
+            if (zLiftLineGeo) {
+                const positions = zLiftLineGeo.attributes.position.array;
+                positions[0] = 0; positions[1] = 10; positions[2] = 0;
+                positions[3] = 0; positions[4] = -zDrop - ex * 25 - 4; positions[5] = 0;
+                zLiftLineGeo.attributes.position.needsUpdate = true;
+            }
+
+            const openRatio = clawOpen / 100;
+            const angle = openRatio * 0.64;
+            clawSliderMesh.position.y = -32 - openRatio * 10;
+
+            for (let i = 0; i < fourJawPivots.length; i++) {
+                fourJawPivots[i].rotation.z = angle;
+                fourJawLinks[i].position.y = -36 - openRatio * 5;
+                fourJawLinks[i].rotation.z = -0.26 + openRatio * 0.48;
+            }
+        }
+
+        function toggleAutoDemo() {
+            isAutoDemo = !isAutoDemo;
+            const btn = document.getElementById('btnAutoDemo');
+            if (isAutoDemo) {
+                btn.innerHTML = `<span>⏹️ 停止自動夾取模擬動畫</span>`;
+                btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+                btn.classList.add('bg-rose-600', 'hover:bg-rose-500');
+            } else {
+                btn.innerHTML = `<span>▶️ 自動模擬「夾娃娃取物全流程」動畫</span>`;
+                btn.classList.remove('bg-rose-600', 'hover:bg-rose-500');
+                btn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+            }
+        }
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+
+            if (isAutoDemo) {
+                demoClock += 0.025;
+                const phase = demoClock % 12;
+                const xSlider = document.getElementById('xPosSlider');
+                const ySlider = document.getElementById('yPosSlider');
+                const zSlider = document.getElementById('zPosSlider');
+                const cSlider = document.getElementById('clawOpenSlider');
+
+                if (phase < 3) {
+                    const p = phase / 3;
+                    xSlider.value = -40 + p * 75;
+                    ySlider.value = 40 - p * 65;
+                    zSlider.value = 18;
+                    cSlider.value = 85;
+                } else if (phase < 5.5) {
+                    const p = (phase - 3) / 2.5;
+                    zSlider.value = 18 + p * 72;
+                    cSlider.value = 85;
+                } else if (phase < 7) {
+                    const p = (phase - 5.5) / 1.5;
+                    cSlider.value = 85 - p * 75;
+                } else if (phase < 9.5) {
+                    const p = (phase - 7) / 2.5;
+                    zSlider.value = 90 - p * 72;
+                } else {
+                    const p = (phase - 9.5) / 2.5;
+                    xSlider.value = 35 - p * 77;
+                    ySlider.value = -25 + p * 67;
+                    if (p > 0.75) cSlider.value = 10 + ((p - 0.75) / 0.25) * 75;
+                }
+                update3DState();
+            }
+
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        function onResize3D() {
+            const container = document.getElementById('three-canvas-container');
+            if (!container || !renderer || !camera) return;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        window.addEventListener('resize', onResize3D);
+        window.addEventListener('load', () => {
+            renderAll();
+            init3DScene();
+        });
+    </script>
+</body>
+</html>
