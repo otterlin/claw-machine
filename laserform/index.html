@@ -1,0 +1,3290 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="blueprint">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LaserCraft Studio 4.0 — 3D 參數化雷射切割外殼與結構設計站</title>
+  <meta name="description" content="在瀏覽器中設計 3D 雷切外殼、正多邊形盒、正多面體、斜蓋、上方倒邊倒角、自由隔板與 2D 面板開孔雕刻，並一鍵輸出 1:1 毫米級 SVG 與 DXF 雷切排版圖。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    /* ==========================================================================
+       UI STYLE SYSTEM: Nordic Blueprint CAD & Carbon Precision Studio
+       Completely redesigned aesthetic distinct from original warm-beige Laserform
+       ========================================================================== */
+    :root, [data-theme="blueprint"] {
+      --bg-app: #EEF2F7;
+      --bg-panel: #FFFFFF;
+      --bg-panel-subtle: #F7F9FC;
+      --bg-panel-hover: #EDF2F9;
+      --bg-stage-top: #E6EDF6;
+      --bg-stage-bottom: #DAE3F0;
+      --bg-hud: rgba(255, 255, 255, 0.88);
+      --border-hairline: #DCE4F0;
+      --border-strong: #C2D0E4;
+      --border-focus: #2563EB;
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #7C8BA1;
+      --accent: #2563EB;
+      --accent-hover: #1D4ED8;
+      --accent-soft: rgba(37, 99, 235, 0.10);
+      --accent-border: rgba(37, 99, 235, 0.30);
+      --laser-cut: #E11D48;
+      --laser-engrave: #0284C7;
+      --emerald: #059669;
+      --emerald-soft: rgba(5, 150, 105, 0.11);
+      --amber: #D97706;
+      --amber-soft: rgba(217, 119, 6, 0.12);
+      --axis-x: #E11D48;
+      --axis-y: #059669;
+      --axis-z: #2563EB;
+      --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 10px 28px rgba(15, 23, 42, 0.08);
+      --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.16);
+      --grid-line: rgba(37, 99, 235, 0.06);
+    }
+
+    [data-theme="carbon"] {
+      --bg-app: #0B0F17;
+      --bg-panel: #111827;
+      --bg-panel-subtle: #182234;
+      --bg-panel-hover: #1E293B;
+      --bg-stage-top: #0D1422;
+      --bg-stage-bottom: #080C14;
+      --bg-hud: rgba(17, 24, 39, 0.86);
+      --border-hairline: #1E293B;
+      --border-strong: #334155;
+      --border-focus: #38BDF8;
+      --text-primary: #F1F5F9;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+      --accent: #0EA5E9;
+      --accent-hover: #38BDF8;
+      --accent-soft: rgba(14, 165, 233, 0.15);
+      --accent-border: rgba(56, 189, 248, 0.35);
+      --laser-cut: #FB7185;
+      --laser-engrave: #38BDF8;
+      --emerald: #34D399;
+      --emerald-soft: rgba(52, 211, 153, 0.14);
+      --amber: #FBBF24;
+      --amber-soft: rgba(251, 191, 36, 0.14);
+      --axis-x: #FB7185;
+      --axis-y: #34D399;
+      --axis-z: #38BDF8;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+      --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.50);
+      --shadow-lg: 0 28px 70px rgba(0, 0, 0, 0.72);
+      --grid-line: rgba(56, 189, 248, 0.06);
+    }
+
+    [data-theme="nordic"] {
+      --bg-app: #ECF2F0;
+      --bg-panel: #FCFDFD;
+      --bg-panel-subtle: #F2F7F5;
+      --bg-panel-hover: #E6F0EC;
+      --bg-stage-top: #E2ECE8;
+      --bg-stage-bottom: #D3E2DC;
+      --bg-hud: rgba(252, 253, 253, 0.90);
+      --border-hairline: #D2E0DA;
+      --border-strong: #B5CCC3;
+      --border-focus: #0D9488;
+      --text-primary: #11221E;
+      --text-secondary: #3E5852;
+      --text-muted: #6F8A83;
+      --accent: #0D9488;
+      --accent-hover: #0F766E;
+      --accent-soft: rgba(13, 148, 136, 0.12);
+      --accent-border: rgba(13, 148, 136, 0.32);
+      --laser-cut: #E11D48;
+      --laser-engrave: #0284C7;
+      --emerald: #059669;
+      --emerald-soft: rgba(5, 150, 105, 0.12);
+      --amber: #D97706;
+      --amber-soft: rgba(217, 119, 6, 0.12);
+      --axis-x: #E11D48;
+      --axis-y: #0D9488;
+      --axis-z: #2563EB;
+      --shadow-sm: 0 2px 6px rgba(17, 34, 30, 0.05);
+      --shadow-md: 0 10px 28px rgba(17, 34, 30, 0.09);
+      --shadow-lg: 0 24px 60px rgba(17, 34, 30, 0.18);
+      --grid-line: rgba(13, 148, 136, 0.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--bg-app); color: var(--text-primary);
+      font-family: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      font-size: 13px; line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+    .mono { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+
+    /* App Shell Layout */
+    .designer-shell {
+      display: grid;
+      grid-template-rows: 60px 1fr;
+      height: 100vh; width: 100vw;
+    }
+
+    /* Top Header Bar */
+    .app-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 18px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-hairline);
+      box-shadow: var(--shadow-sm);
+      z-index: 20;
+    }
+    .brand-lockup {
+      display: flex; align-items: center; gap: 11px;
+      padding-right: 12px; border-right: 1px solid var(--border-hairline);
+    }
+    .brand-mark {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #4F46E5);
+      color: #fff; display: grid; place-items: center;
+      box-shadow: 0 4px 12px var(--accent-soft);
+      flex-shrink: 0;
+    }
+    .brand-title {
+      font-weight: 800; font-size: 15px; letter-spacing: -0.01em;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .brand-version {
+      font-size: 10px; font-weight: 700; padding: 1px 6px;
+      border-radius: 99px; background: var(--accent-soft);
+      color: var(--accent); border: 1px solid var(--accent-border);
+    }
+    .brand-subtitle {
+      font-size: 11px; color: var(--text-muted); display: block;
+    }
+
+    .header-tools {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .icon-btn, .pill-btn {
+      height: 34px; padding: 0 10px; border-radius: 8px;
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-panel-subtle);
+      color: var(--text-secondary);
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 600;
+      transition: all 0.16s ease;
+    }
+    .icon-btn:hover:not(:disabled), .pill-btn:hover:not(:disabled) {
+      border-color: var(--border-strong);
+      background: var(--bg-panel-hover);
+      color: var(--text-primary);
+    }
+    .icon-btn:disabled, .pill-btn:disabled {
+      opacity: 0.4; cursor: not-allowed;
+    }
+    .theme-select, .lang-select {
+      height: 34px; padding: 0 10px; border-radius: 8px;
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-panel-subtle);
+      color: var(--text-secondary); font-size: 12px; font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Project Title Editable Pill */
+    .project-title-btn {
+      margin: 0 auto;
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 6px 14px; border-radius: 10px;
+      border: 1px solid transparent;
+      background: var(--bg-panel-subtle);
+      transition: all 0.15s ease;
+    }
+    .project-title-btn:hover {
+      border-color: var(--border-strong);
+      background: var(--bg-panel-hover);
+    }
+    .project-name-text {
+      font-weight: 700; font-size: 13.5px; color: var(--text-primary);
+    }
+    .saved-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; color: var(--emerald);
+      background: var(--emerald-soft);
+      padding: 2px 8px; border-radius: 99px; font-weight: 600;
+    }
+    .saved-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--emerald);
+    }
+
+    .header-actions {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .header-divider {
+      width: 1px; height: 22px; background: var(--border-hairline); margin: 0 2px;
+    }
+    .primary-cta {
+      height: 36px; padding: 0 15px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: #fff; font-weight: 700; font-size: 12.5px;
+      display: inline-flex; align-items: center; gap: 7px;
+      box-shadow: 0 4px 14px var(--accent-soft);
+      transition: transform 0.12s ease, filter 0.15s ease;
+    }
+    .primary-cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .primary-cta:active { transform: translateY(0); }
+
+    /* Workspace 3-Column Grid */
+    .workspace {
+      display: grid;
+      grid-template-columns: var(--left-w, 268px) 1fr var(--right-w, 336px);
+      height: calc(100vh - 60px);
+      overflow: hidden;
+      transition: grid-template-columns 0.22s ease;
+    }
+    .workspace.hide-left { --left-w: 0px; }
+    .workspace.hide-right { --right-w: 0px; }
+
+    /* Left Rail */
+    .left-rail {
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border-hairline);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .rail-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border-hairline);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .rail-title {
+      font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 7px;
+    }
+    .rail-count-badge {
+      font-size: 11px; font-weight: 700; padding: 2px 8px;
+      border-radius: 99px; background: var(--accent-soft); color: var(--accent);
+    }
+    .quick-bar {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;
+      padding: 8px 12px; background: var(--bg-panel-subtle);
+      border-bottom: 1px solid var(--border-hairline);
+    }
+    .quick-bar button {
+      padding: 5px 6px; border-radius: 6px; font-size: 11px; font-weight: 600;
+      border: 1px solid var(--border-hairline); background: var(--bg-panel);
+      color: var(--text-secondary); transition: 0.15s;
+    }
+    .quick-bar button:hover {
+      border-color: var(--accent); color: var(--accent);
+    }
+
+    .face-list {
+      flex: 1; overflow-y: auto; padding: 10px 12px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .face-row {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 6px; padding: 8px 9px; border-radius: 10px;
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-panel-subtle);
+      transition: all 0.15s ease;
+    }
+    .face-row:hover { border-color: var(--border-strong); }
+    .face-row.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .face-row.disabled-face { opacity: 0.52; }
+    .face-select-btn {
+      display: flex; align-items: center; gap: 9px; flex: 1; text-align: left;
+      min-width: 0;
+    }
+    .face-code {
+      width: 26px; height: 26px; border-radius: 7px;
+      background: var(--bg-panel); border: 1px solid var(--border-strong);
+      color: var(--accent); font-weight: 800; font-size: 12px;
+      display: grid; place-items: center; flex-shrink: 0;
+    }
+    .face-row.selected .face-code {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+    }
+    .face-info { min-width: 0; }
+    .face-name {
+      font-weight: 700; font-size: 12.5px; color: var(--text-primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .face-dim {
+      font-size: 10.5px; color: var(--text-muted); display: block;
+    }
+    .face-controls {
+      display: flex; gap: 4px; flex-shrink: 0;
+    }
+    .mini-toggle {
+      padding: 4px 7px; border-radius: 6px; font-size: 11px; font-weight: 700;
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-panel); color: var(--text-muted);
+      transition: 0.14s;
+    }
+    .mini-toggle.on-use {
+      background: var(--emerald-soft); color: var(--emerald);
+      border-color: rgba(5, 150, 105, 0.35);
+    }
+    .mini-toggle.on-tab {
+      background: var(--accent-soft); color: var(--accent);
+      border-color: var(--accent-border);
+    }
+
+    .rail-footer {
+      padding: 12px; border-top: 1px solid var(--border-hairline);
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      background: var(--bg-panel-subtle);
+    }
+    .rail-footer button {
+      height: 36px; border-radius: 8px; border: 1px solid var(--border-hairline);
+      background: var(--bg-panel); font-weight: 600; font-size: 12px;
+      color: var(--text-secondary); display: flex; align-items: center;
+      justify-content: center; gap: 6px;
+    }
+    .rail-footer button:hover {
+      border-color: var(--accent); color: var(--accent);
+    }
+    /* Center 3D Viewport Stage */
+    .viewport-panel {
+      position: relative; width: 100%; height: 100%; overflow: hidden;
+      background:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+        radial-gradient(circle at 50% 35%, var(--bg-stage-top), var(--bg-stage-bottom));
+      background-size: 36px 36px, 36px 36px, 100% 100%;
+      user-select: none;
+    }
+    #threeCanvasWrap {
+      width: 100%; height: 100%; position: relative;
+    }
+    #threeCanvasWrap canvas {
+      display: block; width: 100% !important; height: 100% !important;
+      outline: none;
+    }
+
+    /* 3D Floating HTML Overlay Labels */
+    #overlayLabels {
+      position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 4;
+    }
+    .label-3d {
+      position: absolute; transform: translate(-50%, -50%);
+      padding: 3px 8px; border-radius: 6px;
+      font-size: 11px; font-weight: 800;
+      background: var(--bg-hud); color: var(--text-primary);
+      border: 1px solid var(--border-strong);
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(8px);
+      white-space: nowrap; pointer-events: auto; cursor: pointer;
+      transition: transform 0.12s ease, border-color 0.12s ease;
+    }
+    .label-3d:hover, .label-3d.active {
+      border-color: var(--accent); background: var(--accent); color: #fff;
+      transform: translate(-50%, -50%) scale(1.08);
+    }
+    .dim-3d {
+      position: absolute; transform: translate(-50%, -50%);
+      padding: 2px 7px; border-radius: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 700;
+      background: rgba(15, 23, 42, 0.84); color: #F8FAFC;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      white-space: nowrap;
+    }
+
+    /* Viewport HUD Controls */
+    .hud-bar {
+      position: absolute; z-index: 8;
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px; border-radius: 11px;
+      background: var(--bg-hud);
+      border: 1px solid var(--border-hairline);
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(12px);
+    }
+    .hud-top-left { top: 14px; left: 14px; }
+    .hud-top-right { top: 14px; right: 14px; flex-wrap: wrap; justify-content: flex-end; }
+    .hud-bottom-left { bottom: 14px; left: 14px; padding: 7px 12px; gap: 14px; }
+    .hud-bottom-right { bottom: 14px; right: 14px; }
+
+    .hud-btn {
+      height: 30px; padding: 0 10px; border-radius: 7px;
+      font-size: 11.5px; font-weight: 700; color: var(--text-secondary);
+      display: inline-flex; align-items: center; gap: 5px;
+      transition: 0.14s;
+    }
+    .hud-btn:hover { background: var(--bg-panel-hover); color: var(--text-primary); }
+    .hud-btn.active {
+      background: var(--accent); color: #fff;
+    }
+    .explode-wrap {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 0 8px; font-size: 11px; font-weight: 700; color: var(--text-secondary);
+    }
+    .explode-wrap input[type="range"] {
+      width: 68px; accent-color: var(--accent); cursor: pointer;
+    }
+
+    /* Right Inspector Panel */
+    .inspector {
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border-hairline);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .inspector-header {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border-hairline);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .eyebrow {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--accent); display: block;
+    }
+    .inspector-header h2 {
+      font-size: 15px; font-weight: 800; margin-top: 1px;
+    }
+    .model-pill {
+      padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700;
+      background: var(--accent-soft); color: var(--accent);
+      border: 1px solid var(--accent-border);
+    }
+
+    .inspector-scroll {
+      flex: 1; overflow-y: auto; padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .edit-2d-card {
+      padding: 11px; border-radius: 11px;
+      background: linear-gradient(135deg, var(--accent-soft), transparent);
+      border: 1px solid var(--accent-border);
+    }
+    .edit-2d-btn {
+      width: 100%; height: 36px; border-radius: 8px;
+      background: var(--accent); color: #fff; font-weight: 700; font-size: 12.5px;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      transition: 0.15s;
+    }
+    .edit-2d-btn:hover:not(:disabled) { background: var(--accent-hover); }
+    .edit-2d-btn:disabled {
+      background: var(--bg-panel-hover); color: var(--text-muted);
+      border: 1px solid var(--border-hairline); cursor: not-allowed;
+    }
+    .field-caption {
+      font-size: 11px; color: var(--text-muted); margin-top: 6px; display: block;
+    }
+
+    /* Collapsible Sections */
+    details.insp-section {
+      border: 1px solid var(--border-hairline);
+      border-radius: 11px; background: var(--bg-panel-subtle);
+      overflow: hidden;
+    }
+    details.insp-section > summary {
+      list-style: none; cursor: pointer;
+      padding: 10px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-weight: 700; font-size: 12.5px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid transparent;
+      user-select: none;
+    }
+    details.insp-section[open] > summary {
+      border-bottom-color: var(--border-hairline);
+    }
+    details.insp-section > summary::-webkit-details-marker { display: none; }
+    .sec-meta {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .sec-body {
+      padding: 11px 12px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .reset-mini-btn {
+      align-self: flex-end; font-size: 11px; font-weight: 600;
+      color: var(--accent); padding: 2px 7px; border-radius: 5px;
+      background: var(--accent-soft);
+    }
+    .reset-mini-btn:hover { filter: brightness(0.95); }
+
+    /* Dimension & Angle Controls */
+    .param-row {
+      display: grid; grid-template-columns: 20px 1fr auto;
+      align-items: center; gap: 7px;
+    }
+    .axis-tag {
+      width: 20px; height: 20px; border-radius: 5px;
+      font-size: 11px; font-weight: 800; color: #fff;
+      display: grid; place-items: center; text-transform: uppercase;
+    }
+    .axis-x { background: var(--axis-x); }
+    .axis-y { background: var(--axis-y); }
+    .axis-z { background: var(--axis-z); }
+    .axis-a { background: var(--accent); }
+
+    .num-wrap {
+      display: inline-flex; align-items: center;
+      background: var(--bg-panel); border: 1px solid var(--border-strong);
+      border-radius: 7px; padding: 0 7px; height: 29px;
+    }
+    .num-wrap input[type="number"] {
+      width: 58px; border: none; background: transparent;
+      text-align: right; font-weight: 700; font-size: 12.5px;
+      font-family: 'JetBrains Mono', monospace; outline: none;
+    }
+    .num-wrap span {
+      font-size: 10.5px; color: var(--text-muted); margin-left: 4px;
+    }
+    .range-slider {
+      grid-column: 1 / -1; width: 100%; height: 5px;
+      accent-color: var(--accent); cursor: pointer;
+    }
+
+    /* Segmented Switch & Grid Buttons */
+    .seg-switch {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+      padding: 3px; border-radius: 8px;
+      background: var(--bg-panel); border: 1px solid var(--border-hairline);
+    }
+    .seg-switch button {
+      padding: 5px 8px; border-radius: 6px; font-size: 11.5px; font-weight: 700;
+      color: var(--text-secondary); transition: 0.14s;
+    }
+    .seg-switch button.active {
+      background: var(--accent); color: #fff;
+    }
+
+    .bevel-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+    }
+    .bevel-btn {
+      padding: 7px 9px; border-radius: 8px;
+      border: 1px solid var(--border-hairline);
+      background: var(--bg-panel); color: var(--text-secondary);
+      font-size: 11.5px; font-weight: 700;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: 0.14s;
+    }
+    .bevel-btn.active {
+      border-color: var(--accent); background: var(--accent-soft); color: var(--accent);
+    }
+
+    /* Divider Item Card */
+    .divider-card {
+      padding: 9px; border-radius: 9px;
+      background: var(--bg-panel); border: 1px solid var(--border-strong);
+      display: flex; flex-direction: column; gap: 7px;
+    }
+    .divider-card-top {
+      display: flex; justify-content: space-between; align-items: center;
+      font-weight: 700; font-size: 12px;
+    }
+    .del-btn {
+      color: var(--laser-cut); font-size: 11px; font-weight: 700;
+      padding: 2px 6px; border-radius: 5px; background: rgba(225, 29, 72, 0.1);
+    }
+
+    /* Preset Chips */
+    .chip-row {
+      display: flex; flex-wrap: wrap; gap: 5px;
+    }
+    .chip {
+      padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;
+      border: 1px solid var(--border-hairline); background: var(--bg-panel);
+      color: var(--text-secondary);
+    }
+    .chip.active, .chip:hover {
+      border-color: var(--accent); color: var(--accent); background: var(--accent-soft);
+    }
+
+    /* Metrics Grid */
+    .metric-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 7px;
+    }
+    .metric-box {
+      padding: 8px 10px; border-radius: 8px;
+      background: var(--bg-panel); border: 1px solid var(--border-hairline);
+    }
+    .metric-box span { font-size: 10.5px; color: var(--text-muted); display: block; }
+    .metric-box strong { font-size: 14px; font-weight: 800; color: var(--accent); }
+
+    .inspector-footer {
+      padding: 12px 14px; border-top: 1px solid var(--border-hairline);
+      background: var(--bg-panel);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .inspector-footer .primary-cta {
+      width: 100%; justify-content: center; height: 40px; font-size: 13px;
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 60;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(6px);
+      display: none; place-items: center; padding: 20px;
+    }
+    .modal-backdrop.open { display: grid; }
+    .modal-card {
+      width: min(980px, 95vw); max-height: 90vh;
+      background: var(--bg-panel); color: var(--text-primary);
+      border: 1px solid var(--border-strong);
+      border-radius: 16px; box-shadow: var(--shadow-lg);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal-head {
+      padding: 16px 22px; border-bottom: 1px solid var(--border-hairline);
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--bg-panel-subtle);
+    }
+    .modal-head h3 { font-size: 17px; font-weight: 800; }
+    .modal-close-btn {
+      width: 32px; height: 32px; border-radius: 8px;
+      border: 1px solid var(--border-hairline); background: var(--bg-panel);
+      font-size: 18px; font-weight: 700; color: var(--text-secondary);
+    }
+    .modal-body {
+      padding: 20px 22px; overflow-y: auto; flex: 1;
+    }
+
+    /* Model Selection Cards */
+    .template-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 10px; margin-top: 10px; margin-bottom: 18px;
+    }
+    .tpl-card {
+      padding: 12px; border-radius: 12px; text-align: left;
+      border: 1px solid var(--border-hairline); background: var(--bg-panel-subtle);
+      display: flex; align-items: center; gap: 12px;
+      transition: 0.16s;
+    }
+    .tpl-card:hover, .tpl-card.selected {
+      border-color: var(--accent); background: var(--accent-soft);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .tpl-icon {
+      width: 54px; height: 54px; border-radius: 10px;
+      background: var(--bg-panel); border: 1px solid var(--border-strong);
+      display: grid; place-items: center; flex-shrink: 0; color: var(--accent);
+    }
+    .tpl-card select {
+      margin-left: auto; padding: 5px 7px; border-radius: 6px;
+      border: 1px solid var(--border-strong); background: var(--bg-panel);
+      font-size: 11.5px; font-weight: 700;
+    }
+
+    /* 2D Face Editor & Nesting Split Layout */
+    .split-modal-body {
+      display: grid; grid-template-columns: 1fr 310px;
+      height: min(74vh, 680px); overflow: hidden;
+    }
+    .canvas-stage-2d {
+      background:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+        var(--bg-stage-top);
+      background-size: 24px 24px, 24px 24px, 100% 100%;
+      position: relative; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; overflow: auto; padding: 20px;
+    }
+    .side-inspector-2d {
+      border-left: 1px solid var(--border-hairline);
+      background: var(--bg-panel); padding: 16px;
+      overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed; bottom: 20px; left: 50%;
+      transform: translate(-50%, 20px);
+      padding: 10px 18px; border-radius: 10px;
+      background: #0F172A; color: #F8FAFC;
+      border: 1px solid #334155; box-shadow: var(--shadow-lg);
+      font-weight: 600; font-size: 12.5px;
+      opacity: 0; pointer-events: none; transition: 0.22s ease; z-index: 100;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 1024px) {
+      .workspace { grid-template-columns: 220px 1fr 290px; }
+      .brand-subtitle { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="designer-shell">
+    <!-- ==================== TOP HEADER BAR ==================== -->
+    <header class="app-header">
+      <div class="brand-lockup">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-title">
+            <span>LaserCraft Studio</span>
+            <span class="brand-version">v4.0 CAD</span>
+          </div>
+          <span class="brand-subtitle">3D 雷射切割外殼與結構生成工作站 · 在 3D 設計，在 2D 切割</span>
+        </div>
+      </div>
+
+      <div class="header-tools">
+        <button class="icon-btn" id="btnHelpTop" type="button" title="快速上手與十步驟教學">
+          <span>❓</span><span>操作說明</span>
+        </button>
+        <select class="theme-select" id="themeSelect" aria-label="介面風格切換" title="切換 UI 視覺主題">
+          <option value="blueprint">📐 建築藍圖淺色 (Blueprint)</option>
+          <option value="carbon">⚡ 極簡石墨深色 (Carbon Dark)</option>
+          <option value="nordic">🌲 北歐森林工坊 (Nordic Sage)</option>
+        </select>
+        <select class="lang-select" id="matSelectTop" aria-label="3D 材質預覽" title="3D 預覽板材材質">
+          <option value="basswood">🪵 椴木合板</option>
+          <option value="walnut">🌰 胡桃實木</option>
+          <option value="acrylic">💎 冰藍壓克力</option>
+          <option value="carbon">🖤 霧黑鋁複合板</option>
+        </select>
+      </div>
+
+      <!-- Editable Project Title -->
+      <button class="project-title-btn" id="btnRenameProject" type="button" title="點擊修改專案名稱">
+        <span class="project-name-text" id="projectNameDisplay">未命名外殼</span>
+        <span class="saved-badge"><span class="saved-dot"></span><span id="saveStatusText">已自動暫存</span></span>
+      </button>
+
+      <div class="header-actions">
+        <button class="icon-btn" id="btnUndo" type="button" title="復原 (Ctrl+Z)" disabled>↶ 復原</button>
+        <button class="icon-btn" id="btnRedo" type="button" title="重做 (Ctrl+Y)" disabled>↷ 重做</button>
+        <span class="header-divider"></span>
+        <button class="pill-btn" id="btnSaveLibrary" type="button" title="儲存至網頁模型庫">💾 儲存</button>
+        <button class="pill-btn" id="btnNewModel" type="button" title="選擇基本量體或常用外形範本">＋ 新模型</button>
+        <button class="primary-cta" id="btnExportTop" type="button">
+          <span>✨ 輸出 <b id="topExportCount" class="mono">6</b> 片雷切板件</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ==================== 3-COLUMN WORKSPACE ==================== -->
+    <section class="workspace" id="workspaceGrid">
+      <!-- 1. LEFT RAIL: 板材清單與專案 -->
+      <aside class="left-rail" aria-label="板材清單與專案">
+        <div class="rail-header">
+          <span class="rail-title">🗂️ 板材清單</span>
+          <span class="rail-count-badge" id="leftPanelCountBadge">6 片 · 啟用 6</span>
+        </div>
+        <div class="quick-bar">
+          <button type="button" id="btnAllUse">全部啟用</button>
+          <button type="button" id="btnOpenTopBox">無蓋收納盒</button>
+          <button type="button" id="btnToggleAllTabs">全卡榫/平面</button>
+        </div>
+        <div class="face-list" id="faceListContainer"></div>
+        <div class="rail-footer">
+          <button type="button" id="btnOpenLibrary">📁 我的模型 (<span id="libCountBadge">0</span>)</button>
+          <button type="button" id="btnHelpBottom">📖 十步驟教學</button>
+        </div>
+      </aside>
+
+      <!-- 2. CENTER 3D VIEWPORT -->
+      <section class="viewport-panel" aria-label="3D 互動預覽區">
+        <!-- Top-Left Sidebar Toggle Handles -->
+        <div class="hud-bar hud-top-left">
+          <button class="hud-btn" id="btnToggleLeft" type="button" title="收合/展開左側板件清單">◧ 板件欄</button>
+          <button class="hud-btn" id="btnToggleRight" type="button" title="收合/展開右側屬性設定">屬性欄 ◨</button>
+        </div>
+
+        <!-- Top-Right 3D Inspection Tools -->
+        <div class="hud-bar hud-top-right">
+          <button class="hud-btn active" id="btnShowDims" type="button" title="顯示目前可見的模型邊長尺標">📏 尺寸</button>
+          <button class="hud-btn active" id="btnShowCodes" type="button" title="在模型表面顯示 A、B、C 面板代號">🅰 名稱</button>
+          <button class="hud-btn active" id="btnShowWire" type="button" title="顯示雷切邊緣與卡榫輪廓線">📐 稜線</button>
+          <div class="explode-wrap" title="爆炸分解圖檢視卡榫與內部隔板">
+            <span>💥 分解</span>
+            <input type="range" id="explodeRange" min="0" max="100" value="0" />
+          </div>
+        </div>
+
+        <!-- Three.js Canvas & Floating 3D Badges -->
+        <div id="threeCanvasWrap"></div>
+        <div id="overlayLabels"></div>
+
+        <!-- Bottom-Left Live Spec Readout -->
+        <div class="hud-bar hud-bottom-left">
+          <span style="font-size:11.5px;font-weight:700;color:var(--text-secondary);">
+            🟢 即時閉合幾何 · <strong class="mono" id="hudDimSummary" style="color:var(--text-primary);">200 × 150 × 80 mm</strong>
+          </span>
+          <span style="font-size:11px;color:var(--text-muted);">左鍵旋轉 · 右鍵平移 · 點擊面板選取</span>
+        </div>
+
+        <!-- Bottom-Right Camera View Switcher -->
+        <div class="hud-bar hud-bottom-right" role="group" aria-label="切換攝影機視角">
+          <button class="hud-btn" data-cam="front" type="button">前</button>
+          <button class="hud-btn" data-cam="back" type="button">後</button>
+          <button class="hud-btn" data-cam="left" type="button">左</button>
+          <button class="hud-btn" data-cam="right" type="button">右</button>
+          <button class="hud-btn" data-cam="top" type="button">上</button>
+          <button class="hud-btn active" data-cam="iso" type="button" title="回到立體等角視角">🧊 立體</button>
+        </div>
+      </section>
+
+      <!-- 3. RIGHT INSPECTOR: 外殼設定 -->
+      <aside class="inspector" aria-label="外殼設定">
+        <div class="inspector-header">
+          <div>
+            <span class="eyebrow">ENCLOSURE INSPECTOR · 外殼設定</span>
+            <h2 id="inspectorTitle">完整模型</h2>
+          </div>
+          <span class="model-pill" id="modelKindBadge">矩形外殼</span>
+        </div>
+
+        <div class="inspector-scroll">
+          <!-- 2D Cut & Engrave Action -->
+          <div class="edit-2d-card">
+            <button class="edit-2d-btn" id="btnOpen2DEditor" type="button" disabled>
+              <span>✏️ 編輯選取面的 2D 切割與雕刻</span>
+            </button>
+            <span class="field-caption" id="selectedFaceCaption">請先在左側清單或 3D 模型點選一片面板（如 A 前板），即可進入 2D 開孔與文字雕刻編輯器。</span>
+          </div>
+
+          <!-- Section 1: 內部淨尺寸 -->
+          <details class="insp-section" open>
+            <summary>
+              <span>📏 內部淨尺寸</span>
+              <span class="sec-meta"><span class="mono" id="dimMetaText">200 × 150 mm</span> ▾</span>
+            </summary>
+            <div class="sec-body">
+              <button class="reset-mini-btn" id="btnResetDims" type="button">↺ 重設尺寸</button>
+
+              <div class="param-row">
+                <span class="axis-tag axis-x">X</span>
+                <label for="inpWidth" id="lblWidth">底部內部寬度</label>
+                <div class="num-wrap">
+                  <input id="inpWidth" type="number" min="20" max="1000" step="1" value="200" />
+                  <span>mm</span>
+                </div>
+                <input class="range-slider" id="rngWidth" type="range" min="30" max="600" step="1" value="200" />
+              </div>
+
+              <div class="param-row" id="rowDepth">
+                <span class="axis-tag axis-z">Z</span>
+                <label for="inpDepth">底部內部深度</label>
+                <div class="num-wrap">
+                  <input id="inpDepth" type="number" min="20" max="1000" step="1" value="150" />
+                  <span>mm</span>
+                </div>
+                <input class="range-slider" id="rngDepth" type="range" min="30" max="600" step="1" value="150" />
+              </div>
+
+              <div class="param-row" id="rowHeight">
+                <span class="axis-tag axis-y">Y</span>
+                <label for="inpHeight">內部最高高度</label>
+                <div class="num-wrap">
+                  <input id="inpHeight" type="number" min="20" max="1000" step="1" value="80" />
+                  <span>mm</span>
+                </div>
+                <input class="range-slider" id="rngHeight" type="range" min="20" max="500" step="1" value="80" />
+              </div>
+
+              <p class="field-caption">寬度與深度是組裝後的底部內部可用空間；板厚與卡榫只往外增加。高度以內部量體最高頂點計算。</p>
+            </div>
+          </details>
+
+          <!-- Section 2: 自由隔板 -->
+          <details class="insp-section" id="secDividers" open>
+            <summary>
+              <span>🪟 自由隔板</span>
+              <span class="sec-meta"><span id="dividerCountMeta">0 片</span> ▾</span>
+            </summary>
+            <div class="sec-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;">
+                <button class="chip" type="button" id="btnAddDivLR">＋ 左右分隔</button>
+                <button class="chip" type="button" id="btnAddDivFB">＋ 前後分隔</button>
+                <button class="chip" type="button" id="btnAddDivHZ">＋ 水平隔層</button>
+              </div>
+              <div id="dividerListWrap" style="display:flex;flex-direction:column;gap:8px;"></div>
+              <p class="field-caption">新增隔板後可調整離中心距離、傾角與逐邊卡榫，開啟卡榫時會在相鄰外殼板材自動切出定位插槽。</p>
+            </div>
+          </details>
+
+          <!-- Section 3: 上方倒邊與倒角 -->
+          <details class="insp-section" id="secBevels">
+            <summary>
+              <span>✂️ 上方倒邊 / 倒角</span>
+              <span class="sec-meta"><span id="bevelCountMeta">0 處</span> ▾</span>
+            </summary>
+            <div class="sec-body">
+              <span class="field-caption" style="margin-top:0;">選擇上蓋四個邊（可多選新增獨立斜板）</span>
+              <div class="bevel-grid">
+                <button class="bevel-btn" type="button" data-bevel="edge-front"><span>✂️ 前邊斜板</span><b>＋</b></button>
+                <button class="bevel-btn" type="button" data-bevel="edge-back"><span>✂️ 後邊斜板</span><b>＋</b></button>
+                <button class="bevel-btn" type="button" data-bevel="edge-left"><span>✂️ 左邊斜板</span><b>＋</b></button>
+                <button class="bevel-btn" type="button" data-bevel="edge-right"><span>✂️ 右邊斜板</span><b>＋</b></button>
+              </div>
+              <span class="field-caption">選擇上蓋四個角（可多選新增角落斜板）</span>
+              <div class="bevel-grid">
+                <button class="bevel-btn" type="button" data-bevel="corner-fl"><span>↗ 前左角</span><b>＋</b></button>
+                <button class="bevel-btn" type="button" data-bevel="corner-fr"><span>↖ 前右角</span><b>＋</b></button>
+                <button class="bevel-btn" type="button" data-bevel="corner-bl"><span>↘ 後左角</span><b>＋</b></button>
+                <button class="bevel-btn" type="button" data-bevel="corner-br"><span>↙ 後右角</span><b>＋</b></button>
+              </div>
+
+              <div class="param-row" style="margin-top:4px;">
+                <span class="axis-tag axis-a">D</span>
+                <label for="inpBevelInset">倒邊內縮距離</label>
+                <div class="num-wrap">
+                  <input id="inpBevelInset" type="number" min="10" max="150" step="1" value="35" />
+                  <span>mm</span>
+                </div>
+                <input class="range-slider" id="rngBevelInset" type="range" min="10" max="120" step="1" value="35" />
+              </div>
+
+              <div class="param-row">
+                <span class="axis-tag axis-y">H</span>
+                <label for="inpBevelDrop">倒邊向下高度</label>
+                <div class="num-wrap">
+                  <input id="inpBevelDrop" type="number" min="10" max="150" step="1" value="28" />
+                  <span>mm</span>
+                </div>
+                <input class="range-slider" id="rngBevelDrop" type="range" min="10" max="120" step="1" value="28" />
+              </div>
+              <p class="field-caption">只裁切量體上方，底板與下方側板輪廓保持不變，並自動產生獨立雷切斜板與卡榫。</p>
+            </div>
+          </details>
+
+          <!-- Section 4: 上蓋傾角 -->
+          <details class="insp-section" id="secTopTilt">
+            <summary>
+              <span>📐 上蓋傾角 (上切割平面)</span>
+              <span class="sec-meta"><span class="mono" id="topTiltMeta">RX 0° · RZ 0°</span> ▾</span>
+            </summary>
+            <div class="sec-body">
+              <button class="reset-mini-btn" id="btnResetTopTilt" type="button">↺ 傾角歸零</button>
+              <div class="param-row">
+                <span class="axis-tag axis-x">RX</span>
+                <label for="inpTopRX">前後傾斜角度</label>
+                <div class="num-wrap">
+                  <input id="inpTopRX" type="number" min="-45" max="45" step="1" value="0" />
+                  <span>°</span>
+                </div>
+                <input class="range-slider" id="rngTopRX" type="range" min="-45" max="45" step="1" value="0" />
+              </div>
+              <div class="param-row">
+                <span class="axis-tag axis-z">RZ</span>
+                <label for="inpTopRZ">左右傾斜角度</label>
+                <div class="num-wrap">
+                  <input id="inpTopRZ" type="number" min="-45" max="45" step="1" value="0" />
+                  <span>°</span>
+                </div>
+                <input class="range-slider" id="rngTopRZ" type="range" min="-45" max="45" step="1" value="0" />
+              </div>
+              <p class="field-caption">上蓋最高點固定使用內部最高高度；側板高度與上板斜邊長度會隨傾角自動幾何補償。</p>
+            </div>
+          </details>
+
+          <!-- Section 5: 四片側板傾角 -->
+          <details class="insp-section" id="secSideAngles">
+            <summary>
+              <span>⛺ 四片側板傾角</span>
+              <span class="sec-meta"><span class="mono" id="sideAngleMeta">0° 同步</span> ▾</span>
+            </summary>
+            <div class="sec-body">
+              <button class="reset-mini-btn" id="btnResetSideAngles" type="button">↺ 側板歸零</button>
+              <div class="seg-switch">
+                <button type="button" class="active" id="btnSideSync">🔗 四邊同步 (金字塔)</button>
+                <button type="button" id="btnSideIndiv">🔓 個別設定</button>
+              </div>
+              <div id="sideSyncWrap" class="param-row">
+                <span class="axis-tag axis-a">ALL</span>
+                <label for="inpSideAll">四邊同步內收傾角</label>
+                <div class="num-wrap">
+                  <input id="inpSideAll" type="number" min="-35" max="45" step="1" value="0" />
+                  <span>°</span>
+                </div>
+                <input class="range-slider" id="rngSideAll" type="range" min="-35" max="45" step="1" value="0" />
+              </div>
+              <div id="sideIndivWrap" style="display:none;flex-direction:column;gap:8px;">
+                <div class="param-row">
+                  <span class="axis-tag axis-x">A</span>
+                  <label>前板傾角</label>
+                  <div class="num-wrap"><input id="inpSideF" type="number" min="-35" max="45" value="0"><span>°</span></div>
+                </div>
+                <div class="param-row">
+                  <span class="axis-tag axis-x">B</span>
+                  <label>後板傾角</label>
+                  <div class="num-wrap"><input id="inpSideB" type="number" min="-35" max="45" value="0"><span>°</span></div>
+                </div>
+                <div class="param-row">
+                  <span class="axis-tag axis-z">C</span>
+                  <label>左板傾角</label>
+                  <div class="num-wrap"><input id="inpSideL" type="number" min="-35" max="45" value="0"><span>°</span></div>
+                </div>
+                <div class="param-row">
+                  <span class="axis-tag axis-z">D</span>
+                  <label>右板傾角</label>
+                  <div class="num-wrap"><input id="inpSideR" type="number" min="-35" max="45" value="0"><span>°</span></div>
+                </div>
+              </div>
+              <p class="field-caption">正角度向內收、負角度向外張；每片側板都繞自己的底邊傾斜。</p>
+            </div>
+          </details>
+
+          <!-- Section 6: 板材厚度與卡榫 -->
+          <details class="insp-section" open>
+            <summary>
+              <span>🧩 板材厚度與卡榫</span>
+              <span class="sec-meta"><span class="mono" id="matMetaText">3.0 mm · 榫 18 mm</span> ▾</span>
+            </summary>
+            <div class="sec-body">
+              <div class="chip-row">
+                <button class="chip" type="button" data-thick="2.7">2.7mm</button>
+                <button class="chip active" type="button" data-thick="3">3.0mm 標準</button>
+                <button class="chip" type="button" data-thick="4">4.0mm</button>
+                <button class="chip" type="button" data-thick="5">5.0mm</button>
+                <button class="chip" type="button" data-thick="6">6.0mm</button>
+              </div>
+
+              <div class="param-row">
+                <span class="axis-tag axis-y">T</span>
+                <label for="inpThickness">實際板材厚度</label>
+                <div class="num-wrap">
+                  <input id="inpThickness" type="number" min="1" max="15" step="0.1" value="3.0" />
+                  <span>mm</span>
+                </div>
+              </div>
+
+              <div class="param-row">
+                <span class="axis-tag axis-a">W</span>
+                <label for="inpTabWidth">目標卡榫寬度</label>
+                <div class="num-wrap">
+                  <input id="inpTabWidth" type="number" min="4" max="60" step="1" value="18" />
+                  <span>mm</span>
+                </div>
+                <input class="range-slider" id="rngTabWidth" type="range" min="5" max="60" step="1" value="18" />
+              </div>
+
+              <div class="param-row">
+                <span class="axis-tag axis-x">K</span>
+                <label for="inpKerf">雷射切縫補償 (Kerf)</label>
+                <div class="num-wrap">
+                  <input id="inpKerf" type="number" min="0" max="0.5" step="0.02" value="0.08" />
+                  <span>mm</span>
+                </div>
+              </div>
+
+              <div>
+                <span class="field-caption" style="margin-bottom:5px;">卡榫伸出方式</span>
+                <div class="seg-switch">
+                  <button type="button" class="active" id="btnTabFull">完整卡榫 (突出接合)</button>
+                  <button type="button" id="btnTabFlush">平放齊平 (斜角補償)</button>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- Section 7: 模型摘要 -->
+          <details class="insp-section" open>
+            <summary>
+              <span>📊 模型摘要</span>
+              <span class="sec-meta"><span id="metricMetaPanels">6 片面板</span> ▾</span>
+            </summary>
+            <div class="sec-body">
+              <div class="metric-grid">
+                <div class="metric-box"><span>啟用面板</span><strong class="mono" id="metPanels">6</strong></div>
+                <div class="metric-box"><span>卡榫接合邊</span><strong class="mono" id="metEdges">12</strong></div>
+                <div class="metric-box"><span>內部底面積</span><strong class="mono" id="metArea">300 cm²</strong></div>
+                <div class="metric-box"><span>內部容積</span><strong class="mono" id="metVolume">2.40 L</strong></div>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="inspector-footer">
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text-muted);">
+            <span>📏 尺寸單位：毫米 (1:1 比例)</span>
+            <span>3D 與 SVG 同步幾何</span>
+          </div>
+          <button class="primary-cta" id="btnExportBottom" type="button">
+            <span>✨ 輸出 <b id="botExportCount" class="mono">6</b> 片雷切板件 (SVG / DXF)</span>
+          </button>
+        </div>
+      </aside>
+    </section>
+  </main>
+  <!-- ==================== MODAL 1: 新模型選擇器 ==================== -->
+  <div class="modal-backdrop" id="modalNewModel" role="dialog" aria-modal="true" aria-labelledby="newModelTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">NEW ENCLOSURE · 新增模型</span>
+          <h3 id="newModelTitle">選擇想製作的外殼造型</h3>
+        </div>
+        <button class="modal-close-btn" data-close="modalNewModel" type="button">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-secondary);font-size:12.5px;margin-bottom:14px;">
+          先從基本量體或常用範本開始，建立後仍可在右側修改尺寸、傾角、上方倒邊、自由隔板與卡榫設定。
+        </p>
+
+        <strong style="font-size:13px;display:block;">基本量體 · 建立全新的幾何結構</strong>
+        <div class="template-grid">
+          <button class="tpl-card selected" type="button" data-tpl="box">
+            <div class="tpl-icon">📦</div>
+            <div>
+              <div style="font-weight:800;font-size:13.5px;">矩形外殼</div>
+              <div style="font-size:11px;color:var(--text-muted);">六面盒體 · 支援斜蓋、倒邊、倒角與自由隔板</div>
+            </div>
+          </button>
+
+          <div class="tpl-card" data-tpl="polygon" style="cursor:pointer;">
+            <div class="tpl-icon">⬢</div>
+            <div>
+              <div style="font-weight:800;font-size:13.5px;">正多邊形外殼</div>
+              <div style="font-size:11px;color:var(--text-muted);">規則等角、等邊的封閉多角柱盒</div>
+            </div>
+            <select id="selPolySides" aria-label="正多邊形側板數量">
+              <option value="3">3 角柱</option>
+              <option value="5">5 角柱</option>
+              <option value="6" selected>6 角柱</option>
+              <option value="8">8 角柱</option>
+              <option value="10">10 角柱</option>
+              <option value="12">12 角柱</option>
+            </select>
+          </div>
+
+          <div class="tpl-card" data-tpl="platonic" style="cursor:pointer;">
+            <div class="tpl-icon">💎</div>
+            <div>
+              <div style="font-weight:800;font-size:13.5px;">正多面體與幾何球</div>
+              <div style="font-size:11px;color:var(--text-muted);">正四、六、八、十二、二十面體燈罩/擺件</div>
+            </div>
+            <select id="selPlatonicKind" aria-label="正多面體種類">
+              <option value="tetra">正四面體 (4面)</option>
+              <option value="octa">正八面體 (8面)</option>
+              <option value="dodeca" selected>正十二面體 (12面)</option>
+              <option value="icosa">正二十面體 (20面)</option>
+            </select>
+          </div>
+        </div>
+
+        <strong style="font-size:13px;display:block;">常用外形範本 · 已設定好常見尺寸與結構斜面</strong>
+        <div class="template-grid">
+          <button class="tpl-card" type="button" data-tpl="bevel-front">
+            <div class="tpl-icon">🎛️</div>
+            <div>
+              <div style="font-weight:800;font-size:13px;">方形切斜邊 (控制盒)</div>
+              <div style="font-size:11px;color:var(--text-muted);">前上邊加入獨立雷切斜面板 · 適合儀表/按鈕盒</div>
+            </div>
+          </button>
+
+          <button class="tpl-card" type="button" data-tpl="bevel-corner">
+            <div class="tpl-icon">📐</div>
+            <div>
+              <div style="font-weight:800;font-size:13px;">方形切斜角 (展示盒)</div>
+              <div style="font-size:11px;color:var(--text-muted);">右前上角加入獨立斜切角板 · 造型感外殼</div>
+            </div>
+          </button>
+
+          <button class="tpl-card" type="button" data-tpl="tri-tower">
+            <div class="tpl-icon">🔺</div>
+            <div>
+              <div style="font-weight:800;font-size:13px;">三角形塔柱</div>
+              <div style="font-size:11px;color:var(--text-muted);">三片等寬側板搭配上下三角形底蓋</div>
+            </div>
+          </button>
+
+          <button class="tpl-card" type="button" data-tpl="hex-tower">
+            <div class="tpl-icon">⬡</div>
+            <div>
+              <div style="font-weight:800;font-size:13px;">六角形塔柱</div>
+              <div style="font-size:11px;color:var(--text-muted);">六片等寬側板 · 適合筆筒、燈籠與收納筒</div>
+            </div>
+          </button>
+
+          <button class="tpl-card" type="button" data-tpl="pyramid">
+            <div class="tpl-icon">⛰️</div>
+            <div>
+              <div style="font-weight:800;font-size:13px;">正方金字塔台</div>
+              <div style="font-size:11px;color:var(--text-muted);">四片側板同步內收 18° · 穩固梯形台座</div>
+            </div>
+          </button>
+
+          <button class="tpl-card" type="button" data-tpl="pent-slant">
+            <div class="tpl-icon">🏠</div>
+            <div>
+              <div style="font-weight:800;font-size:13px;">斜蓋展示外殼</div>
+              <div style="font-size:11px;color:var(--text-muted);">上切割平面傾斜 16° · 搭配內部分隔層</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: 2D 面板開孔與雕刻編輯器 ==================== -->
+  <div class="modal-backdrop" id="modal2DEditor" role="dialog" aria-modal="true">
+    <div class="modal-card" style="width:min(1080px,96vw);">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">2D PANEL CUT & ENGRAVE STUDIO · 面板繪圖工作區</span>
+          <h3 id="editor2DTitle">編輯面板 A 前板 的 2D 切割與雕刻</h3>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="pill-btn" type="button" id="btnClearFaceShapes">🗑️ 清空此面圖形</button>
+          <button class="primary-cta" type="button" data-close="modal2DEditor">✓ 完成並返回 3D</button>
+        </div>
+      </div>
+      <div class="split-modal-body">
+        <div class="canvas-stage-2d">
+          <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+            <button class="pill-btn" type="button" id="btnAddRect">▭ 新增矩形孔</button>
+            <button class="pill-btn" type="button" id="btnAddRoundRect">▢ 新增圓角矩形</button>
+            <button class="pill-btn" type="button" id="btnAddCircle">◯ 新增圓孔/按鈕孔</button>
+            <button class="pill-btn" type="button" id="btnAddVents">≣ 新增散熱格柵</button>
+            <button class="pill-btn" type="button" id="btnAddText">🔤 新增雕刻文字</button>
+          </div>
+          <div id="face2DSvgPreview" style="background:var(--bg-panel);padding:18px;border-radius:12px;border:1px solid var(--border-strong);box-shadow:var(--shadow-md);max-width:100%;overflow:auto;"></div>
+          <span class="field-caption" style="margin-top:10px;">
+            🔴 紅/黑實線：雷射切割穿透 (Cut)　｜　🔵 藍色填色/線條：雷射表面雕刻 (Engrave)　｜　點擊圖形可在右側微調座標與尺寸
+          </span>
+        </div>
+
+        <div class="side-inspector-2d">
+          <strong style="font-size:13px;">新增或編輯此面圖形</strong>
+          <div id="shapeList2D" style="display:flex;flex-direction:column;gap:8px;"></div>
+          <div id="shapePropEditor" style="display:none;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid var(--border-hairline);">
+            <strong style="font-size:12px;color:var(--accent);">選取圖形屬性（原點為面板中心 mm）</strong>
+            <div class="seg-switch">
+              <button type="button" id="btnModeCut" class="active">🔴 雷射切割穿透</button>
+              <button type="button" id="btnModeEngrave">🔵 藍色填色雕刻</button>
+            </div>
+            <div class="param-row">
+              <span class="axis-tag axis-x">X</span>
+              <label>水平偏移 X</label>
+              <div class="num-wrap"><input id="shpX" type="number" step="1" value="0"><span>mm</span></div>
+            </div>
+            <div class="param-row">
+              <span class="axis-tag axis-y">Y</span>
+              <label>垂直偏移 Y</label>
+              <div class="num-wrap"><input id="shpY" type="number" step="1" value="0"><span>mm</span></div>
+            </div>
+            <div class="param-row" id="rowShpW">
+              <span class="axis-tag axis-a">W</span>
+              <label id="lblShpW">寬度 / 直徑</label>
+              <div class="num-wrap"><input id="shpW" type="number" min="2" max="500" step="1" value="40"><span>mm</span></div>
+            </div>
+            <div class="param-row" id="rowShpH">
+              <span class="axis-tag axis-z">H</span>
+              <label>高度</label>
+              <div class="num-wrap"><input id="shpH" type="number" min="2" max="500" step="1" value="24"><span>mm</span></div>
+            </div>
+            <div class="param-row" id="rowShpText" style="display:none;">
+              <span class="axis-tag axis-a">T</span>
+              <label>雕刻文字</label>
+              <input id="shpTextVal" type="text" value="LASERCRAFT" style="padding:5px 8px;border-radius:6px;border:1px solid var(--border-strong);background:var(--bg-panel);width:130px;font-weight:700;" />
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;">
+              <button class="chip" type="button" id="btnCenterShp">🎯 置中對齊</button>
+              <button class="chip" type="button" id="btnDeleteShp" style="color:var(--laser-cut);">🗑️ 刪除此圖形</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: 1:1 雷切板件排版與 SVG/DXF 輸出 ==================== -->
+  <div class="modal-backdrop" id="modalExport" role="dialog" aria-modal="true">
+    <div class="modal-card" style="width:min(1120px,96vw);">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">1:1 LASER CUTTING LAYOUT · 雷切板件排版與匯出</span>
+          <h3>二維板件預覽與 1:1 雷切檔案下載</h3>
+        </div>
+        <button class="modal-close-btn" data-close="modalExport" type="button">×</button>
+      </div>
+      <div class="split-modal-body">
+        <div class="canvas-stage-2d" id="nestingPreviewWrap">
+          <div id="nestingSvgContainer" style="background:#fff;padding:16px;border-radius:12px;border:1px solid var(--border-strong);box-shadow:var(--shadow-md);max-width:100%;max-height:100%;overflow:auto;"></div>
+        </div>
+        <div class="side-inspector-2d">
+          <strong style="font-size:13px;">雷切板材排版設定</strong>
+
+          <div>
+            <span class="field-caption" style="margin-bottom:5px;">常用雷切機工作床 / 板材大小</span>
+            <select id="selSheetPreset" style="width:100%;height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--border-strong);background:var(--bg-panel);font-weight:700;">
+              <option value="600x400" selected>600 × 400 mm (4060 雷切機標準板)</option>
+              <option value="400x300">400 × 300 mm (桌上型雷切機)</option>
+              <option value="900x600">900 × 600 mm (大型雷切床)</option>
+              <option value="300x200">300 × 200 mm (A4 級小型木板)</option>
+              <option value="auto">自動緊湊單一大版面</option>
+            </select>
+          </div>
+
+          <div class="param-row">
+            <span class="axis-tag axis-x">W</span>
+            <label>板材寬度</label>
+            <div class="num-wrap"><input id="inpSheetW" type="number" min="100" max="2400" value="600"><span>mm</span></div>
+          </div>
+
+          <div class="param-row">
+            <span class="axis-tag axis-y">H</span>
+            <label>板材高度</label>
+            <div class="num-wrap"><input id="inpSheetH" type="number" min="100" max="1600" value="400"><span>mm</span></div>
+          </div>
+
+          <div class="param-row">
+            <span class="axis-tag axis-a">G</span>
+            <label>板件安全間距</label>
+            <div class="num-wrap"><input id="inpPartGap" type="number" min="1" max="30" value="6"><span>mm</span></div>
+          </div>
+
+          <label style="display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:12px;cursor:pointer;">
+            <span>包含面板代號與尺寸標籤 (藍色層)</span>
+            <input type="checkbox" id="chkExportLabels" checked style="width:16px;height:16px;accent-color:var(--accent);" />
+          </label>
+
+          <div class="metric-grid" style="margin-top:4px;">
+            <div class="metric-box"><span>輸出板件數</span><strong class="mono" id="expStatCount">6 片</strong></div>
+            <div class="metric-box"><span>板材利用率</span><strong class="mono" id="expStatUtil">68%</strong></div>
+          </div>
+
+          <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;">
+            <button class="primary-cta" id="btnDownloadSVG" type="button" style="width:100%;justify-content:center;height:40px;">
+              ⬇ 下載 1:1 雷切 SVG 檔案 (.svg)
+            </button>
+            <button class="pill-btn" id="btnDownloadDXF" type="button" style="width:100%;justify-content:center;height:38px;border-color:var(--accent);color:var(--accent);font-weight:800;">
+              📐 下載 AutoCAD R12 雷切檔 (.dxf)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 4: 我的外殼模型庫 ==================== -->
+  <div class="modal-backdrop" id="modalLibrary" role="dialog" aria-modal="true">
+    <div class="modal-card" style="width:min(760px,94vw);">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">WEB MODEL LIBRARY · 網頁模型庫</span>
+          <h3>我的外殼模型庫</h3>
+        </div>
+        <button class="modal-close-btn" data-close="modalLibrary" type="button">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <input id="inpSaveModelName" type="text" placeholder="輸入模型名稱（例如：ESP32 控制盒 200x150）" style="flex:1;height:38px;padding:0 12px;border-radius:8px;border:1px solid var(--border-strong);background:var(--bg-panel-subtle);font-weight:600;" />
+          <button class="primary-cta" id="btnConfirmSaveLib" type="button">💾 儲存目前設計</button>
+        </div>
+        <div id="libraryListContainer" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 5: 十步驟快速上手說明 ==================== -->
+  <div class="modal-backdrop" id="modalHelp" role="dialog" aria-modal="true">
+    <div class="modal-card" style="width:min(820px,94vw);">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">QUICK START · 快速上手指南</span>
+          <h3>十個步驟完成 1:1 雷射切割外殼板件</h3>
+        </div>
+        <button class="modal-close-btn" data-close="modalHelp" type="button">×</button>
+      </div>
+      <div class="modal-body" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;">
+        <div class="metric-box"><strong>01. 選擇外殼形狀</strong><span>點選右上角「＋ 新模型」，可選矩形、正多邊形柱、正多面體或斜邊控制盒範本。</span></div>
+        <div class="metric-box"><strong>02. 輸入內部淨尺寸</strong><span>矩形使用底部內部寬度 X 與深度 Z；高度 Y 一律是量體最高頂點，板厚只往外增加。</span></div>
+        <div class="metric-box"><strong>03. 調整上蓋傾角</strong><span>展開「上蓋傾角」輸入 RX/RZ 角度，側板與上板斜邊會自動幾何補償並生成卡榫。</span></div>
+        <div class="metric-box"><strong>04. 四片側板內收/外張</strong><span>可選擇「四邊同步」快速建立金字塔台，或個別設定前、後、左、右板傾角。</span></div>
+        <div class="metric-box"><strong>05. 多選上方倒邊與倒角</strong><span>在「上方倒邊/倒角」任意勾選四邊或四角，自動新增獨立雷切斜面板。</span></div>
+        <div class="metric-box"><strong>06. 加入自由內部隔板</strong><span>支援左右、前後與水平隔層，開啟卡榫時會在相鄰外殼板自動切出對應定位槽。</span></div>
+        <div class="metric-box"><strong>07. 設定板厚與卡榫寬度</strong><span>支援 2.7 / 3.0 / 5.0mm 等常用板厚與 Kerf 切縫補償，自動鋪滿對稱卡榫齒。</span></div>
+        <div class="metric-box"><strong>08. 編輯 2D 開孔與文字雕刻</strong><span>點選任一面板後按「編輯 2D 切割與雕刻」，可加入圓孔、散熱孔與雷射雕刻文字。</span></div>
+        <div class="metric-box"><strong>09. 3D 爆炸分解與尺標核對</strong><span>拖曳右上角「💥 分解」滑桿檢視卡榫咬合，並切換尺標與面板代號。</span></div>
+        <div class="metric-box"><strong>10. 輸出 1:1 SVG 與 DXF</strong><span>點擊「輸出雷切板件」，自動依 600×400mm 等板材排版並下載 1:1 SVG 或 DXF。</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toastMsg" role="status" aria-live="polite"></div>
+  <script>
+    /* ==========================================================================
+       LASERCRAFT STUDIO 4.0 — PARAMETRIC 3D & 2D LASER CUTTING ENGINE
+       ========================================================================== */
+    const $ = (s) => document.querySelector(s);
+    const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+    // Default Project State
+    function createDefaultState() {
+      return {
+        projectName: '未命名外殼',
+        modelKind: 'box',        // 'box' | 'polygon' | 'platonic'
+        polySides: 6,
+        platonicKind: 'dodeca',  // 'tetra' | 'octa' | 'dodeca' | 'icosa'
+        width: 200,              // X internal width (or circumdiameter)
+        depth: 150,              // Z internal depth
+        height: 80,              // Y internal max height
+        thickness: 3.0,          // Board thickness mm
+        tabWidth: 18,            // Target finger width mm
+        kerf: 0.08,              // Kerf compensation mm
+        tabMode: 'full',         // 'full' | 'flush'
+        topRX: 0,                // Top plane pitch (-45..45 deg)
+        topRZ: 0,                // Top plane roll (-45..45 deg)
+        sideSync: true,
+        sideAngles: { all: 0, front: 0, back: 0, left: 0, right: 0 },
+        bevels: [],              // e.g. ['edge-front', 'corner-fr']
+        bevelInset: 35,
+        bevelDrop: 28,
+        dividers: [],            // { id, dir:'lr'|'fb'|'hz', offset:0, tilt:0, tabs:true }
+        panelStates: {},         // code -> { enabled:true, tabs:true }
+        faceShapes: {},          // code -> [ { id, type:'rect'|'rrect'|'circle'|'vents'|'text', mode:'cut'|'engrave', x:0, y:0, w:40, h:24, text:'LASER' } ]
+        selectedFace: 'A',
+        selectedShapeId: null,
+        showDims: true,
+        showCodes: true,
+        showWire: true,
+        explode: 0,
+        materialPreset: 'basswood'
+      };
+    }
+
+    let state = createDefaultState();
+    let historyStack = [];
+    let redoStack = [];
+
+    function pushHistory() {
+      const snap = JSON.stringify({
+        projectName: state.projectName,
+        modelKind: state.modelKind,
+        polySides: state.polySides,
+        platonicKind: state.platonicKind,
+        width: state.width,
+        depth: state.depth,
+        height: state.height,
+        thickness: state.thickness,
+        tabWidth: state.tabWidth,
+        kerf: state.kerf,
+        tabMode: state.tabMode,
+        topRX: state.topRX,
+        topRZ: state.topRZ,
+        sideSync: state.sideSync,
+        sideAngles: { ...state.sideAngles },
+        bevels: [...state.bevels],
+        bevelInset: state.bevelInset,
+        bevelDrop: state.bevelDrop,
+        dividers: JSON.parse(JSON.stringify(state.dividers)),
+        panelStates: JSON.parse(JSON.stringify(state.panelStates)),
+        faceShapes: JSON.parse(JSON.stringify(state.faceShapes))
+      });
+      if (historyStack.length && historyStack[historyStack.length - 1] === snap) return;
+      historyStack.push(snap);
+      if (historyStack.length > 40) historyStack.shift();
+      redoStack = [];
+      updateUndoRedoUI();
+    }
+
+    function applySnapshot(snapStr) {
+      const data = JSON.parse(snapStr);
+      Object.assign(state, data);
+      syncInputsFromState();
+      rebuildAll();
+      updateUndoRedoUI();
+    }
+
+    function updateUndoRedoUI() {
+      $('#btnUndo').disabled = historyStack.length <= 1;
+      $('#btnRedo').disabled = redoStack.length === 0;
+    }
+
+    function showToast(msg) {
+      const el = $('#toastMsg');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => el.classList.remove('show'), 2400);
+    }
+
+    /* ==========================================================================
+       2D FINGER-JOINT RECTANGLE & POLYGON CONTOUR GENERATOR
+       Generates exact 2D vertices [{x,y}] with interlocking finger tabs
+       ========================================================================== */
+    function generateFingerEdge(p1, p2, edgeMode, t, targetTabW, flushMode) {
+      // edgeMode: 'flat' | 'male' (tabs protrude outward) | 'female' (notches cut inward)
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const len = Math.hypot(dx, dy);
+      if (edgeMode === 'flat' || len < t * 3) {
+        return [p1];
+      }
+      const ux = dx / len;
+      const uy = dy / len;
+      // Outward normal (assuming CCW outer contour, outward normal is (uy, -ux))
+      const nx = uy;
+      const ny = -ux;
+
+      let count = Math.max(3, Math.floor(len / Math.max(4, targetTabW)));
+      if (count % 2 === 0) count += 1; // Always odd number of segments for symmetry
+      const segLen = len / count;
+      const depth = flushMode ? t * 0.72 : t;
+      const pts = [p1];
+
+      for (let i = 0; i < count; i++) {
+        const isTabSeg = (i % 2 === 1);
+        const s0 = i * segLen;
+        const s1 = (i + 1) * segLen;
+        const base0 = { x: p1.x + ux * s0, y: p1.y + uy * s0 };
+        const base1 = { x: p1.x + ux * s1, y: p1.y + uy * s1 };
+
+        if (edgeMode === 'male' && isTabSeg) {
+          pts.push(base0);
+          pts.push({ x: base0.x + nx * depth, y: base0.y + ny * depth });
+          pts.push({ x: base1.x + nx * depth, y: base1.y + ny * depth });
+          pts.push(base1);
+        } else if (edgeMode === 'female' && isTabSeg) {
+          pts.push(base0);
+          pts.push({ x: base0.x - nx * depth, y: base0.y - ny * depth });
+          pts.push({ x: base1.x - nx * depth, y: base1.y - ny * depth });
+          pts.push(base1);
+        } else {
+          if (i > 0) pts.push(base0);
+        }
+      }
+      return pts;
+    }
+
+    // Build a quadrilateral/trapezoid panel with 4 edges [bottom, right, top, left]
+    function buildQuadPanelContour(wBottom, wTop, hLeft, hRight, edges, t, tabW, flush) {
+      // CCW vertices centered at (0,0)
+      const hAvg = (hLeft + hRight) / 2;
+      const pBL = { x: -wBottom / 2, y: -hAvg / 2 };
+      const pBR = { x:  wBottom / 2, y: -hAvg / 2 };
+      const pTR = { x:  wTop / 2,    y: -hAvg / 2 + hRight };
+      const pTL = { x: -wTop / 2,    y: -hAvg / 2 + hLeft };
+
+      const corners = [pBL, pBR, pTR, pTL];
+      const allPts = [];
+      for (let e = 0; e < 4; e++) {
+        const c1 = corners[e];
+        const c2 = corners[(e + 1) % 4];
+        const segPts = generateFingerEdge(c1, c2, edges[e], t, tabW, flush);
+        allPts.push(...segPts);
+      }
+      return allPts;
+    }
+
+    // Build a regular N-gon panel with finger tabs on each side
+    function buildRegularPolygonContour(n, circumRadius, edgeMode, t, tabW, flush) {
+      const corners = [];
+      for (let i = 0; i < n; i++) {
+        const ang = (i * 2 * Math.PI) / n - Math.PI / 2;
+        corners.push({
+          x: Math.cos(ang) * circumRadius,
+          y: Math.sin(ang) * circumRadius
+        });
+      }
+      const allPts = [];
+      for (let i = 0; i < n; i++) {
+        const c1 = corners[i];
+        const c2 = corners[(i + 1) % n];
+        allPts.push(...generateFingerEdge(c1, c2, edgeMode, t, tabW, flush));
+      }
+      return allPts;
+    }
+
+    /* ==========================================================================
+       BUILD ALL ENCLOSURE PANELS (3D Pose + 2D Contour + Slots + Cutouts)
+       ========================================================================== */
+    function generateModelPanels() {
+      const t = Math.max(1, +state.thickness || 3);
+      const tabW = Math.max(4, +state.tabWidth || 18);
+      const flush = state.tabMode === 'flush';
+      const W = Math.max(20, +state.width || 200);
+      const D = Math.max(20, +state.depth || 150);
+      const H = Math.max(20, +state.height || 80);
+
+      const panels = [];
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+      function getPanelCfg(code) {
+        if (!state.panelStates[code]) {
+          state.panelStates[code] = { enabled: true, tabs: true };
+        }
+        return state.panelStates[code];
+      }
+
+      if (state.modelKind === 'box') {
+        // Compute top plane tilt heights at front/back/left/right
+        const rxRad = (state.topRX * Math.PI) / 180;
+        const rzRad = (state.topRZ * Math.PI) / 180;
+        const dropFB = Math.min(H * 0.65, Math.abs(Math.tan(rxRad)) * D);
+        const dropLR = Math.min(H * 0.65, Math.abs(Math.tan(rzRad)) * W);
+
+        const hFront = state.topRX >= 0 ? H - dropFB : H;
+        const hBack  = state.topRX <  0 ? H - dropFB : H;
+        const hLeft  = state.topRZ >= 0 ? H - dropLR : H;
+        const hRight = state.topRZ <  0 ? H - dropLR : H;
+
+        // Side taper angle compensation
+        const angF = ((state.sideSync ? state.sideAngles.all : state.sideAngles.front) * Math.PI) / 180;
+        const angB = ((state.sideSync ? state.sideAngles.all : state.sideAngles.back) * Math.PI) / 180;
+        const angL = ((state.sideSync ? state.sideAngles.all : state.sideAngles.left) * Math.PI) / 180;
+        const angR = ((state.sideSync ? state.sideAngles.all : state.sideAngles.right) * Math.PI) / 180;
+
+        const insetX = Math.min(W * 0.36, Math.sin(angL) * H);
+        const insetZ = Math.min(D * 0.36, Math.sin(angF) * H);
+        const wTop = Math.max(24, W - insetX * 2);
+        const dTop = Math.max(24, D - insetZ * 2);
+
+        // Bevel reductions on top edges
+        const hasBevF = state.bevels.includes('edge-front');
+        const hasBevB = state.bevels.includes('edge-back');
+        const hasBevL = state.bevels.includes('edge-left');
+        const hasBevR = state.bevels.includes('edge-right');
+        const bInset = Math.min(Math.min(W, D) * 0.35, +state.bevelInset || 35);
+        const bDrop  = Math.min(H * 0.55, +state.bevelDrop || 28);
+
+        const effHFront = hasBevF ? Math.max(18, hFront - bDrop) : hFront;
+        const effHBack  = hasBevB ? Math.max(18, hBack - bDrop) : hBack;
+        const effHLeft  = hasBevL ? Math.max(18, hLeft - bDrop) : hLeft;
+        const effHRight = hasBevR ? Math.max(18, hRight - bDrop) : hRight;
+
+        // 6 Core Box Panels
+        const rawDefs = [
+          {
+            code: 'A', name: '前板', wB: W, wT: wTop, hL: effHFront, hR: effHFront,
+            edges: ['male', 'male', 'male', 'male'],
+            pos: [0, effHFront / 2, D / 2 + t / 2 - insetZ * 0.35],
+            rot: [-angF, 0, 0], normal: [0, 0, 1]
+          },
+          {
+            code: 'B', name: '後板', wB: W, wT: wTop, hL: effHBack, hR: effHBack,
+            edges: ['male', 'male', 'male', 'male'],
+            pos: [0, effHBack / 2, -D / 2 - t / 2 + insetZ * 0.35],
+            rot: [angB, Math.PI, 0], normal: [0, 0, -1]
+          },
+          {
+            code: 'C', name: '左板', wB: D, wT: dTop, hL: effHBack, hR: effHFront,
+            edges: ['male', 'female', 'male', 'female'],
+            pos: [-W / 2 - t / 2 + insetX * 0.35, (effHBack + effHFront) / 4, 0],
+            rot: [0, -Math.PI / 2, -angL], normal: [-1, 0, 0]
+          },
+          {
+            code: 'D', name: '右板', wB: D, wT: dTop, hL: effHFront, hR: effHBack,
+            edges: ['male', 'female', 'male', 'female'],
+            pos: [W / 2 + t / 2 - insetX * 0.35, (effHBack + effHFront) / 4, 0],
+            rot: [0, Math.PI / 2, angR], normal: [1, 0, 0]
+          },
+          {
+            code: 'E', name: '上板',
+            wB: wTop - (hasBevL ? bInset : 0) - (hasBevR ? bInset : 0),
+            wT: wTop - (hasBevL ? bInset : 0) - (hasBevR ? bInset : 0),
+            hL: Math.hypot(dTop, hBack - hFront) - (hasBevF ? bInset : 0) - (hasBevB ? bInset : 0),
+            hR: Math.hypot(dTop, hBack - hFront) - (hasBevF ? bInset : 0) - (hasBevB ? bInset : 0),
+            edges: ['female', 'female', 'female', 'female'],
+            pos: [
+              ((hasBevL ? bInset : 0) - (hasBevR ? bInset : 0)) / 2,
+              (hFront + hBack) / 2 + t / 2,
+              ((hasBevB ? bInset : 0) - (hasBevF ? bInset : 0)) / 2
+            ],
+            rot: [-Math.PI / 2 + rxRad * 0.55, 0, rzRad * 0.55], normal: [0, 1, 0]
+          },
+          {
+            code: 'F', name: '底板', wB: W, wT: W, hL: D, hR: D,
+            edges: ['female', 'female', 'female', 'female'],
+            pos: [0, -t / 2, 0],
+            rot: [Math.PI / 2, 0, 0], normal: [0, -1, 0]
+          }
+        ];
+
+        rawDefs.forEach((def) => {
+          const cfg = getPanelCfg(def.code);
+          const effectiveEdges = cfg.tabs ? def.edges : ['flat', 'flat', 'flat', 'flat'];
+          const contour = buildQuadPanelContour(def.wB, def.wT, def.hL, def.hR, effectiveEdges, t, tabW, flush);
+          panels.push({
+            code: def.code,
+            name: def.name,
+            w: Math.round(Math.max(def.wB, def.wT)),
+            h: Math.round(Math.max(def.hL, def.hR)),
+            enabled: cfg.enabled,
+            tabs: cfg.tabs,
+            contour,
+            holes: [],
+            engravings: [],
+            pos: def.pos,
+            rot: def.rot,
+            normal: def.normal
+          });
+        });
+
+        // Add Bevel Plates (Edge & Corner Bevels)
+        let nextLetterIdx = 6; // 'G'
+        const bevelAngle = Math.atan2(bDrop, bInset);
+        const bevelSlopeLen = Math.hypot(bInset, bDrop);
+
+        state.bevels.forEach((bevKey) => {
+          const code = letters[nextLetterIdx++] || ('B' + nextLetterIdx);
+          const cfg = getPanelCfg(code);
+          if (bevKey === 'edge-front') {
+            const edges = cfg.tabs ? ['female', 'male', 'female', 'male'] : ['flat', 'flat', 'flat', 'flat'];
+            panels.push({
+              code, name: '前上倒邊斜板',
+              w: Math.round(wTop), h: Math.round(bevelSlopeLen),
+              enabled: cfg.enabled, tabs: cfg.tabs,
+              contour: buildQuadPanelContour(wTop, wTop, bevelSlopeLen, bevelSlopeLen, edges, t, tabW, flush),
+              holes: [], engravings: [],
+              pos: [0, hFront - bDrop / 2, D / 2 - bInset / 2],
+              rot: [-Math.PI / 2 + bevelAngle, 0, 0],
+              normal: [0, 0.7, 0.7]
+            });
+          } else if (bevKey === 'edge-back') {
+            const edges = cfg.tabs ? ['female', 'male', 'female', 'male'] : ['flat', 'flat', 'flat', 'flat'];
+            panels.push({
+              code, name: '後上倒邊斜板',
+              w: Math.round(wTop), h: Math.round(bevelSlopeLen),
+              enabled: cfg.enabled, tabs: cfg.tabs,
+              contour: buildQuadPanelContour(wTop, wTop, bevelSlopeLen, bevelSlopeLen, edges, t, tabW, flush),
+              holes: [], engravings: [],
+              pos: [0, hBack - bDrop / 2, -D / 2 + bInset / 2],
+              rot: [-Math.PI / 2 - bevelAngle, 0, 0],
+              normal: [0, 0.7, -0.7]
+            });
+          } else if (bevKey === 'edge-left') {
+            const edges = cfg.tabs ? ['female', 'male', 'female', 'male'] : ['flat', 'flat', 'flat', 'flat'];
+            panels.push({
+              code, name: '左上倒邊斜板',
+              w: Math.round(dTop), h: Math.round(bevelSlopeLen),
+              enabled: cfg.enabled, tabs: cfg.tabs,
+              contour: buildQuadPanelContour(dTop, dTop, bevelSlopeLen, bevelSlopeLen, edges, t, tabW, flush),
+              holes: [], engravings: [],
+              pos: [-W / 2 + bInset / 2, hLeft - bDrop / 2, 0],
+              rot: [-Math.PI / 2, 0, bevelAngle],
+              normal: [-0.7, 0.7, 0]
+            });
+          } else if (bevKey === 'edge-right') {
+            const edges = cfg.tabs ? ['female', 'male', 'female', 'male'] : ['flat', 'flat', 'flat', 'flat'];
+            panels.push({
+              code, name: '右上倒邊斜板',
+              w: Math.round(dTop), h: Math.round(bevelSlopeLen),
+              enabled: cfg.enabled, tabs: cfg.tabs,
+              contour: buildQuadPanelContour(dTop, dTop, bevelSlopeLen, bevelSlopeLen, edges, t, tabW, flush),
+              holes: [], engravings: [],
+              pos: [W / 2 - bInset / 2, hRight - bDrop / 2, 0],
+              rot: [-Math.PI / 2, 0, -bevelAngle],
+              normal: [0.7, 0.7, 0]
+            });
+          } else if (bevKey.startsWith('corner-')) {
+            const sx = bevKey.endsWith('r') ? 1 : -1;
+            const sz = bevKey.includes('f') ? 1 : -1;
+            const cName = (sz > 0 ? '前' : '後') + (sx > 0 ? '右' : '左') + '倒角板';
+            const triPts = [
+              { x: -bInset * 0.7, y: -bDrop * 0.6 },
+              { x:  bInset * 0.7, y: -bDrop * 0.6 },
+              { x: 0,             y:  bDrop * 0.7 }
+            ];
+            panels.push({
+              code, name: cName,
+              w: Math.round(bInset * 1.4), h: Math.round(bDrop * 1.3),
+              enabled: cfg.enabled, tabs: cfg.tabs,
+              contour: triPts,
+              holes: [], engravings: [],
+              pos: [sx * (W / 2 - bInset * 0.45), H - bDrop * 0.45, sz * (D / 2 - bInset * 0.45)],
+              rot: [-sz * 0.55, sx * sz * Math.PI / 4, -sx * 0.55],
+              normal: [sx * 0.6, 0.6, sz * 0.6]
+            });
+          }
+        });
+
+        // Add Free Internal Dividers & Matching Wall Slots
+        state.dividers.forEach((div, idx) => {
+          const code = 'P' + (idx + 1);
+          const cfg = getPanelCfg(code);
+          const tiltRad = ((+div.tilt || 0) * Math.PI) / 180;
+          const useTabs = cfg.tabs && div.tabs !== false;
+          const edges = useTabs ? ['male', 'male', 'male', 'male'] : ['flat', 'flat', 'flat', 'flat'];
+
+          if (div.dir === 'lr') {
+            const offX = Math.max(-W * 0.42, Math.min(W * 0.42, +div.offset || 0));
+            const divH = H * 0.92;
+            panels.push({
+              code, name: `左右隔板 #${idx + 1}`,
+              w: Math.round(D), h: Math.round(divH),
+              enabled: cfg.enabled, tabs: useTabs,
+              contour: buildQuadPanelContour(D, D, divH, divH, edges, t, tabW, flush),
+              holes: [], engravings: [],
+              pos: [offX, divH / 2, 0],
+              rot: [0, Math.PI / 2, tiltRad],
+              normal: [1, 0, 0]
+            });
+            // Cut matching vertical slots in Front (A) & Back (B) panels
+            if (useTabs && cfg.enabled) {
+              const pA = panels.find(p => p.code === 'A');
+              const pB = panels.find(p => p.code === 'B');
+              if (pA) pA.holes.push({ type: 'rect', x: offX, y: 0, w: t, h: divH * 0.55 });
+              if (pB) pB.holes.push({ type: 'rect', x: -offX, y: 0, w: t, h: divH * 0.55 });
+            }
+          } else if (div.dir === 'fb') {
+            const offZ = Math.max(-D * 0.42, Math.min(D * 0.42, +div.offset || 0));
+            const divH = H * 0.92;
+            panels.push({
+              code, name: `前後隔板 #${idx + 1}`,
+              w: Math.round(W), h: Math.round(divH),
+              enabled: cfg.enabled, tabs: useTabs,
+              contour: buildQuadPanelContour(W, W, divH, divH, edges, t, tabW, flush),
+              holes: [], engravings: [],
+              pos: [0, divH / 2, offZ],
+              rot: [tiltRad, 0, 0],
+              normal: [0, 0, 1]
+            });
+            if (useTabs && cfg.enabled) {
+              const pC = panels.find(p => p.code === 'C');
+              const pD = panels.find(p => p.code === 'D');
+              if (pC) pC.holes.push({ type: 'rect', x: offZ, y: 0, w: t, h: divH * 0.55 });
+              if (pD) pD.holes.push({ type: 'rect', x: -offZ, y: 0, w: t, h: divH * 0.55 });
+            }
+          } else {
+            // Horizontal shelf divider
+            const offY = Math.max(-H * 0.35, Math.min(H * 0.35, +div.offset || 0));
+            panels.push({
+              code, name: `水平隔層 #${idx + 1}`,
+              w: Math.round(W), h: Math.round(D),
+              enabled: cfg.enabled, tabs: useTabs,
+              contour: buildQuadPanelContour(W, W, D, D, edges, t, tabW, flush),
+              holes: [], engravings: [],
+              pos: [0, H / 2 + offY, 0],
+              rot: [Math.PI / 2 + tiltRad, 0, 0],
+              normal: [0, 1, 0]
+            });
+            if (useTabs && cfg.enabled) {
+              const pA = panels.find(p => p.code === 'A');
+              const pB = panels.find(p => p.code === 'B');
+              if (pA) pA.holes.push({ type: 'rect', x: 0, y: offY, w: W * 0.55, h: t });
+              if (pB) pB.holes.push({ type: 'rect', x: 0, y: offY, w: W * 0.55, h: t });
+            }
+          }
+        });
+
+      } else if (state.modelKind === 'polygon') {
+        // Regular N-gon Prism Enclosure
+        const n = Math.max(3, Math.min(12, +state.polySides || 6));
+        const R = W / 2; // Circumradius
+        const sideW = 2 * R * Math.sin(Math.PI / n);
+        const apothem = R * Math.cos(Math.PI / n);
+
+        // Top & Bottom N-gon caps
+        const cfgTop = getPanelCfg('A');
+        panels.push({
+          code: 'A', name: `上蓋 (${n}角)`,
+          w: Math.round(W), h: Math.round(W),
+          enabled: cfgTop.enabled, tabs: cfgTop.tabs,
+          contour: buildRegularPolygonContour(n, R, cfgTop.tabs ? 'female' : 'flat', t, tabW, flush),
+          holes: [], engravings: [],
+          pos: [0, H + t / 2, 0],
+          rot: [-Math.PI / 2, 0, 0],
+          normal: [0, 1, 0]
+        });
+
+        const cfgBot = getPanelCfg('B');
+        panels.push({
+          code: 'B', name: `底板 (${n}角)`,
+          w: Math.round(W), h: Math.round(W),
+          enabled: cfgBot.enabled, tabs: cfgBot.tabs,
+          contour: buildRegularPolygonContour(n, R, cfgBot.tabs ? 'female' : 'flat', t, tabW, flush),
+          holes: [], engravings: [],
+          pos: [0, -t / 2, 0],
+          rot: [Math.PI / 2, 0, 0],
+          normal: [0, -1, 0]
+        });
+
+        for (let i = 0; i < n; i++) {
+          const code = letters[i + 2] || ('S' + (i + 1));
+          const cfg = getPanelCfg(code);
+          const midAng = ((i + 0.5) * 2 * Math.PI) / n - Math.PI / 2;
+          const nx = Math.cos(midAng);
+          const nz = Math.sin(midAng);
+          const edges = cfg.tabs ? ['male', 'male', 'male', 'female'] : ['flat', 'flat', 'flat', 'flat'];
+
+          panels.push({
+            code, name: `側板 #${i + 1}`,
+            w: Math.round(sideW), h: Math.round(H),
+            enabled: cfg.enabled, tabs: cfg.tabs,
+            contour: buildQuadPanelContour(sideW, sideW, H, H, edges, t, tabW, flush),
+            holes: [], engravings: [],
+            pos: [nx * (apothem + t / 2), H / 2, nz * (apothem + t / 2)],
+            rot: [0, -midAng + Math.PI / 2, 0],
+            normal: [nx, 0, nz]
+          });
+        }
+      } else if (state.modelKind === 'platonic') {
+        // Platonic Solids Generator
+        const kind = state.platonicKind || 'dodeca';
+        const faceSides = kind === 'dodeca' ? 5 : 3;
+        const faceCount = kind === 'tetra' ? 4 : kind === 'octa' ? 8 : kind === 'dodeca' ? 12 : 20;
+        const faceR = W * 0.34;
+
+        for (let i = 0; i < faceCount; i++) {
+          const code = i < 26 ? letters[i] : ('F' + (i + 1));
+          const cfg = getPanelCfg(code);
+          // Golden-spiral spherical distribution for clean 3D visualization
+          const phi = Math.acos(1 - (2 * (i + 0.5)) / faceCount);
+          const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+          const rDist = W * 0.44;
+          const nx = Math.sin(phi) * Math.cos(theta);
+          const ny = Math.cos(phi);
+          const nz = Math.sin(phi) * Math.sin(theta);
+
+          panels.push({
+            code, name: `多面體面板 #${i + 1}`,
+            w: Math.round(faceR * 2), h: Math.round(faceR * 2),
+            enabled: cfg.enabled, tabs: cfg.tabs,
+            contour: buildRegularPolygonContour(faceSides, faceR, cfg.tabs ? 'male' : 'flat', t, tabW, flush),
+            holes: [], engravings: [],
+            pos: [nx * rDist, W * 0.5 + ny * rDist, nz * rDist],
+            rot: [phi - Math.PI / 2, theta, 0],
+            normal: [nx, ny, nz]
+          });
+        }
+      }
+
+      // Attach User 2D Cutouts & Engravings to Each Panel
+      panels.forEach((p) => {
+        const shapes = state.faceShapes[p.code] || [];
+        shapes.forEach((sh) => {
+          if (sh.mode === 'engrave') {
+            p.engravings.push(sh);
+          } else {
+            p.holes.push(sh);
+          }
+        });
+      });
+
+      return panels;
+    }
+    /* ==========================================================================
+       THREE.JS 3D WEBGL SCENE & REAL EXTRUDED FINGER-JOINT MESH RENDERER
+       ========================================================================== */
+    let scene, camera, renderer, controls, enclosureGroup, dimHelperGroup;
+    let currentPanels = [];
+    let panelMeshMap = new Map(); // mesh.uuid -> panel.code
+
+    const MATERIAL_PRESETS = {
+      basswood: { face: 0xDFB17B, side: 0x9C6334, edge: 0x5E3719, selected: 0x3B82F6, opacity: 1.0 },
+      walnut:   { face: 0x7A5037, side: 0x472B1B, edge: 0x29170E, opacity: 1.0, selected: 0x38BDF8 },
+      acrylic:  { face: 0x38BDF8, side: 0x0284C7, edge: 0x0369A1, opacity: 0.68, selected: 0xF43F5E },
+      carbon:   { face: 0x334155, side: 0x1E293B, edge: 0x94A3B8, opacity: 1.0, selected: 0x38BDF8 }
+    };
+
+    function initThreeScene() {
+      const wrap = $('#threeCanvasWrap');
+      const w = wrap.clientWidth || 800;
+      const h = wrap.clientHeight || 600;
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(40, w / h, 1, 8000);
+      camera.position.set(340, 270, 380);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(w, h);
+      renderer.shadowMap.enabled = true;
+      wrap.innerHTML = '';
+      wrap.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+      controls.target.set(0, 45, 0);
+
+      // Studio Lighting
+      const ambLight = new THREE.AmbientLight(0xffffff, 0.68);
+      scene.add(ambLight);
+
+      const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.72);
+      dirLight1.position.set(350, 600, 420);
+      scene.add(dirLight1);
+
+      const dirLight2 = new THREE.DirectionalLight(0x93C5FD, 0.35);
+      dirLight2.position.set(-360, 240, -320);
+      scene.add(dirLight2);
+
+      // Subtle Floor Reference Grid
+      const grid = new THREE.GridHelper(900, 30, 0x64748B, 0x94A3B8);
+      grid.position.y = -4;
+      grid.material.opacity = 0.22;
+      grid.material.transparent = true;
+      scene.add(grid);
+
+      enclosureGroup = new THREE.Group();
+      dimHelperGroup = new THREE.Group();
+      scene.add(enclosureGroup);
+      scene.add(dimHelperGroup);
+
+      // Click to Select Panel in 3D
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      let downPos = { x: 0, y: 0 };
+
+      renderer.domElement.addEventListener('pointerdown', (e) => {
+        downPos = { x: e.clientX, y: e.clientY };
+      });
+      renderer.domElement.addEventListener('pointerup', (e) => {
+        if (Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) > 5) return;
+        const rect = renderer.domElement.getBoundingClientRect();
+        pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObjects(enclosureGroup.children, true);
+        for (const hit of hits) {
+          const code = panelMeshMap.get(hit.object.uuid);
+          if (code) {
+            selectFace(code);
+            break;
+          }
+        }
+      });
+
+      window.addEventListener('resize', onWindowResize);
+      animateLoop();
+    }
+
+    function onWindowResize() {
+      const wrap = $('#threeCanvasWrap');
+      if (!wrap || !renderer) return;
+      const w = wrap.clientWidth || 800;
+      const h = wrap.clientHeight || 600;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+
+    function buildHolePath(hole) {
+      const path = new THREE.Path();
+      const x = +hole.x || 0;
+      const y = +hole.y || 0;
+      const w = Math.max(2, +hole.w || 20);
+      const h = Math.max(2, +hole.h || 20);
+
+      if (hole.type === 'circle') {
+        path.absarc(x, y, w / 2, 0, Math.PI * 2, true);
+      } else {
+        path.moveTo(x - w / 2, y - h / 2);
+        path.lineTo(x - w / 2, y + h / 2);
+        path.lineTo(x + w / 2, y + h / 2);
+        path.lineTo(x + w / 2, y - h / 2);
+        path.closePath();
+      }
+      return path;
+    }
+
+    function render3DEnclosure(panels) {
+      if (!enclosureGroup) return;
+      while (enclosureGroup.children.length) {
+        const obj = enclosureGroup.children.pop();
+        if (obj.geometry) obj.geometry.dispose();
+      }
+      while (dimHelperGroup.children.length) {
+        dimHelperGroup.children.pop();
+      }
+      panelMeshMap.clear();
+
+      const t = Math.max(1, +state.thickness || 3);
+      const preset = MATERIAL_PRESETS[state.materialPreset] || MATERIAL_PRESETS.basswood;
+      const explodeDist = (+state.explode || 0) * 0.85;
+
+      panels.forEach((p) => {
+        if (!p.enabled || !p.contour || p.contour.length < 3) return;
+
+        const shape = new THREE.Shape();
+        shape.moveTo(p.contour[0].x, p.contour[0].y);
+        for (let i = 1; i < p.contour.length; i++) {
+          shape.lineTo(p.contour[i].x, p.contour[i].y);
+        }
+        shape.closePath();
+
+        // Add Cutout Holes (only if safely inside panel bounds)
+        p.holes.forEach((h) => {
+          if (h.type === 'vents') {
+            const slots = 4;
+            const slotW = Math.max(4, h.w);
+            const slotH = Math.max(2.5, h.h / 7);
+            for (let s = 0; s < slots; s++) {
+              const sy = h.y + (s - (slots - 1) / 2) * (slotH * 2.1);
+              if (Math.abs(h.x) + slotW / 2 < p.w * 0.46 && Math.abs(sy) + slotH / 2 < p.h * 0.46) {
+                shape.holes.push(buildHolePath({ type: 'rect', x: h.x, y: sy, w: slotW, h: slotH }));
+              }
+            }
+          } else if (h.type !== 'text') {
+            if (Math.abs(h.x) + h.w / 2 < p.w * 0.47 && Math.abs(h.y) + h.h / 2 < p.h * 0.47) {
+              shape.holes.push(buildHolePath(h));
+            }
+          }
+        });
+
+        const geom = new THREE.ExtrudeGeometry(shape, {
+          depth: t,
+          bevelEnabled: false,
+          curveSegments: 18
+        });
+        geom.translate(0, 0, -t / 2);
+
+        const isSel = state.selectedFace === p.code;
+        const faceMat = new THREE.MeshStandardMaterial({
+          color: isSel ? preset.selected : preset.face,
+          roughness: state.materialPreset === 'acrylic' ? 0.15 : 0.62,
+          metalness: state.materialPreset === 'carbon' ? 0.35 : 0.05,
+          transparent: preset.opacity < 1,
+          opacity: isSel ? 0.95 : preset.opacity
+        });
+        const sideMat = new THREE.MeshStandardMaterial({
+          color: isSel ? 0x1D4ED8 : preset.side,
+          roughness: 0.78
+        });
+
+        const mesh = new THREE.Mesh(geom, [faceMat, sideMat]);
+        const nx = p.normal[0] || 0;
+        const ny = p.normal[1] || 0;
+        const nz = p.normal[2] || 0;
+
+        mesh.position.set(
+          p.pos[0] + nx * explodeDist,
+          p.pos[1] + ny * explodeDist,
+          p.pos[2] + nz * explodeDist
+        );
+        mesh.rotation.set(p.rot[0], p.rot[1], p.rot[2]);
+        panelMeshMap.set(mesh.uuid, p.code);
+
+        if (state.showWire) {
+          const edgesGeom = new THREE.EdgesGeometry(geom, 15);
+          const edgesMat = new THREE.LineBasicMaterial({
+            color: isSel ? 0xFFFFFF : preset.edge,
+            transparent: true,
+            opacity: isSel ? 0.95 : 0.65
+          });
+          const wire = new THREE.LineSegments(edgesGeom, edgesMat);
+          mesh.add(wire);
+        }
+
+        enclosureGroup.add(mesh);
+        p._worldPos = mesh.position.clone();
+      });
+
+      // 3D Dimension Ruler Lines
+      if (state.showDims) {
+        const W = +state.width || 200;
+        const D = state.modelKind === 'box' ? (+state.depth || 150) : W;
+        const H = state.modelKind === 'platonic' ? W : (+state.height || 80);
+        const lineMat = new THREE.LineBasicMaterial({ color: 0x2563EB });
+
+        // X Width Line
+        const xGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-W / 2, 0, D / 2 + 22),
+          new THREE.Vector3( W / 2, 0, D / 2 + 22)
+        ]);
+        dimHelperGroup.add(new THREE.Line(xGeo, lineMat));
+
+        // Z Depth Line
+        const zGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(W / 2 + 22, 0, -D / 2),
+          new THREE.Vector3(W / 2 + 22, 0,  D / 2)
+        ]);
+        dimHelperGroup.add(new THREE.Line(zGeo, lineMat));
+
+        // Y Height Line
+        const yGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-W / 2 - 22, 0, D / 2),
+          new THREE.Vector3(-W / 2 - 22, H, D / 2)
+        ]);
+        dimHelperGroup.add(new THREE.Line(yGeo, lineMat));
+      }
+
+      rebuild3DOverlayBadges(panels);
+    }
+
+    function rebuild3DOverlayBadges(panels) {
+      const container = $('#overlayLabels');
+      container.innerHTML = '';
+
+      if (state.showCodes) {
+        panels.forEach((p) => {
+          if (!p.enabled || !p._worldPos) return;
+          const el = document.createElement('button');
+          el.type = 'button';
+          el.className = 'label-3d' + (state.selectedFace === p.code ? ' active' : '');
+          el.textContent = `${p.code} ${p.name}`;
+          el.dataset.code = p.code;
+          el.onclick = () => selectFace(p.code);
+          container.appendChild(el);
+          p._badgeEl = el;
+        });
+      }
+
+      if (state.showDims) {
+        const W = +state.width || 200;
+        const D = state.modelKind === 'box' ? (+state.depth || 150) : W;
+        const H = state.modelKind === 'platonic' ? W : (+state.height || 80);
+        const dims = [
+          { text: `X ${W} mm`, pos: new THREE.Vector3(0, 0, D / 2 + 28) },
+          { text: `Z ${D} mm`, pos: new THREE.Vector3(W / 2 + 28, 0, 0) },
+          { text: `Y ${H} mm`, pos: new THREE.Vector3(-W / 2 - 28, H / 2, D / 2) }
+        ];
+        dims.forEach((d) => {
+          const el = document.createElement('div');
+          el.className = 'dim-3d';
+          el.textContent = d.text;
+          el._pos3d = d.pos;
+          container.appendChild(el);
+        });
+      }
+    }
+
+    function updateOverlayPositions() {
+      if (!camera || !renderer) return;
+      const w = renderer.domElement.clientWidth;
+      const h = renderer.domElement.clientHeight;
+
+      currentPanels.forEach((p) => {
+        if (!p._badgeEl || !p._worldPos) return;
+        const v = p._worldPos.clone().project(camera);
+        if (v.z > 1) {
+          p._badgeEl.style.display = 'none';
+          return;
+        }
+        p._badgeEl.style.display = 'block';
+        p._badgeEl.style.left = `${(v.x * 0.5 + 0.5) * w}px`;
+        p._badgeEl.style.top = `${(-v.y * 0.5 + 0.5) * h}px`;
+      });
+
+      $$('#overlayLabels .dim-3d').forEach((el) => {
+        if (!el._pos3d) return;
+        const v = el._pos3d.clone().project(camera);
+        el.style.left = `${(v.x * 0.5 + 0.5) * w}px`;
+        el.style.top = `${(-v.y * 0.5 + 0.5) * h}px`;
+      });
+    }
+
+    function animateLoop() {
+      requestAnimationFrame(animateLoop);
+      if (controls) controls.update();
+      if (renderer && scene && camera) {
+        renderer.render(scene, camera);
+        updateOverlayPositions();
+      }
+    }
+
+    function setCameraView(mode) {
+      const dist = Math.max(state.width, state.depth, state.height) * 2.2 + 120;
+      const cy = (state.height || 80) * 0.45;
+      controls.target.set(0, cy, 0);
+      if (mode === 'front') camera.position.set(0, cy, dist);
+      else if (mode === 'back') camera.position.set(0, cy, -dist);
+      else if (mode === 'left') camera.position.set(-dist, cy, 0);
+      else if (mode === 'right') camera.position.set(dist, cy, 0);
+      else if (mode === 'top') camera.position.set(0, dist * 1.15, 0.01);
+      else camera.position.set(dist * 0.72, cy + dist * 0.52, dist * 0.78);
+      controls.update();
+    }
+    /* ==========================================================================
+       UI SYNCHRONIZATION, 2D PANEL EDITOR & 1:1 SVG / DXF NESTING EXPORTER
+       ========================================================================== */
+    function selectFace(code) {
+      state.selectedFace = code;
+      rebuildAll();
+    }
+
+    function renderLeftFaceList(panels) {
+      const container = $('#faceListContainer');
+      const activeCount = panels.filter(p => p.enabled).length;
+      $('#leftPanelCountBadge').textContent = `${panels.length} 片 · 啟用 ${activeCount}`;
+      $('#topExportCount').textContent = activeCount;
+      $('#botExportCount').textContent = activeCount;
+      $('#metricMetaPanels').textContent = `${activeCount} 片面板`;
+      $('#metPanels').textContent = activeCount;
+
+      container.innerHTML = panels.map((p) => {
+        const isSel = state.selectedFace === p.code;
+        const cutCount = (state.faceShapes[p.code] || []).length;
+        return `
+          <div class="face-row ${isSel ? 'selected' : ''} ${p.enabled ? '' : 'disabled-face'}" data-code="${p.code}">
+            <button type="button" class="face-select-btn" data-select="${p.code}">
+              <span class="face-code mono">${p.code}</span>
+              <span class="face-info">
+                <span class="face-name">${p.name}${cutCount ? ` · ✂️${cutCount}` : ''}</span>
+                <span class="face-dim mono">${p.w} × ${p.h} mm</span>
+              </span>
+            </button>
+            <div class="face-controls">
+              <button type="button" class="mini-toggle ${p.enabled ? 'on-use' : ''}" data-toggle-use="${p.code}">
+                ${p.enabled ? '使用' : '停用'}
+              </button>
+              <button type="button" class="mini-toggle ${p.tabs ? 'on-tab' : ''}" data-toggle-tab="${p.code}">
+                ${p.tabs ? '卡榫' : '平面'}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      $$('[data-select]').forEach(btn => {
+        btn.onclick = () => selectFace(btn.dataset.select);
+      });
+      $$('[data-toggle-use]').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const code = btn.dataset.toggleUse;
+          state.panelStates[code].enabled = !state.panelStates[code].enabled;
+          pushHistory();
+          rebuildAll();
+        };
+      });
+      $$('[data-toggle-tab]').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const code = btn.dataset.toggleTab;
+          state.panelStates[code].tabs = !state.panelStates[code].tabs;
+          pushHistory();
+          rebuildAll();
+        };
+      });
+    }
+
+    function renderDividerListUI() {
+      const wrap = $('#dividerListWrap');
+      $('#dividerCountMeta').textContent = `${state.dividers.length} 片`;
+      if (!state.dividers.length) {
+        wrap.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:4px 0;">尚未新增隔板，點擊上方按鈕可加入左右、前後或水平隔層。</div>`;
+        return;
+      }
+      wrap.innerHTML = state.dividers.map((d, i) => {
+        const dirName = d.dir === 'lr' ? '左右分隔' : d.dir === 'fb' ? '前後分隔' : '水平隔層';
+        return `
+          <div class="divider-card">
+            <div class="divider-card-top">
+              <span>#P${i + 1} · ${dirName}</span>
+              <button type="button" class="del-btn" data-del-div="${i}">刪除</button>
+            </div>
+            <div class="param-row">
+              <span class="axis-tag axis-a">O</span>
+              <label>離中心距離</label>
+              <div class="num-wrap">
+                <input type="number" data-div-off="${i}" value="${d.offset}" step="2" min="-200" max="200">
+                <span>mm</span>
+              </div>
+            </div>
+            <div class="param-row">
+              <span class="axis-tag axis-z">∠</span>
+              <label>傾斜角度</label>
+              <div class="num-wrap">
+                <input type="number" data-div-tilt="${i}" value="${d.tilt}" step="1" min="-35" max="35">
+                <span>°</span>
+              </div>
+            </div>
+            <label style="display:flex;align-items:center;justify-content:space-between;font-size:11.5px;font-weight:600;cursor:pointer;">
+              <span>逐邊卡榫（在相鄰外殼板開定位槽）</span>
+              <input type="checkbox" data-div-tabs="${i}" ${d.tabs !== false ? 'checked' : ''} style="accent-color:var(--accent);" />
+            </label>
+          </div>
+        `;
+      }).join('');
+
+      $$('[data-del-div]').forEach(b => {
+        b.onclick = () => {
+          state.dividers.splice(+b.dataset.delDiv, 1);
+          pushHistory();
+          rebuildAll();
+        };
+      });
+      $$('[data-div-off]').forEach(inp => {
+        inp.oninput = () => {
+          state.dividers[+inp.dataset.divOff].offset = +inp.value || 0;
+          rebuildAll();
+        };
+      });
+      $$('[data-div-tilt]').forEach(inp => {
+        inp.oninput = () => {
+          state.dividers[+inp.dataset.divTilt].tilt = +inp.value || 0;
+          rebuildAll();
+        };
+      });
+      $$('[data-div-tabs]').forEach(chk => {
+        chk.onchange = () => {
+          state.dividers[+chk.dataset.divTabs].tabs = chk.checked;
+          pushHistory();
+          rebuildAll();
+        };
+      });
+    }
+
+    function updateInspectorSummary(panels) {
+      const W = +state.width || 200;
+      const D = state.modelKind === 'box' ? (+state.depth || 150) : W;
+      const H = state.modelKind === 'platonic' ? W : (+state.height || 80);
+
+      $('#projectNameDisplay').textContent = state.projectName;
+      $('#hudDimSummary').textContent = `${W} × ${D} × ${H} mm`;
+      $('#dimMetaText').textContent = `${W} × ${D} mm`;
+      $('#topTiltMeta').textContent = `RX ${state.topRX}° · RZ ${state.topRZ}°`;
+      $('#sideAngleMeta').textContent = state.sideSync ? `${state.sideAngles.all}° 同步` : '個別角度';
+      $('#matMetaText').textContent = `${(+state.thickness).toFixed(1)} mm · 榫 ${state.tabWidth} mm`;
+      $('#bevelCountMeta').textContent = `${state.bevels.length} 處`;
+
+      const kindMap = {
+        box: '矩形外殼',
+        polygon: `正 ${state.polySides} 角柱`,
+        platonic: { tetra: '正四面體', octa: '正八面體', dodeca: '正十二面體', icosa: '正二十面體' }[state.platonicKind] || '正多面體'
+      };
+      $('#modelKindBadge').textContent = kindMap[state.modelKind] || '矩形外殼';
+
+      // Show/Hide box-specific controls
+      const isBox = state.modelKind === 'box';
+      $('#rowDepth').style.display = isBox ? 'grid' : 'none';
+      $('#rowHeight').style.display = state.modelKind === 'platonic' ? 'none' : 'grid';
+      $('#lblWidth').textContent = isBox ? '底部內部寬度' : '內部外接直徑';
+      $('#secDividers').style.display = isBox ? 'block' : 'none';
+      $('#secBevels').style.display = isBox ? 'block' : 'none';
+      $('#secTopTilt').style.display = isBox ? 'block' : 'none';
+      $('#secSideAngles').style.display = isBox ? 'block' : 'none';
+
+      // Update Bevel active buttons
+      $$('[data-bevel]').forEach(btn => {
+        const on = state.bevels.includes(btn.dataset.bevel);
+        btn.classList.toggle('active', on);
+        btn.querySelector('b').textContent = on ? '✓' : '＋';
+      });
+
+      // Selected Face Caption & 2D Button
+      const selPanel = panels.find(p => p.code === state.selectedFace);
+      const btn2D = $('#btnOpen2DEditor');
+      if (selPanel) {
+        btn2D.disabled = false;
+        btn2D.innerHTML = `<span>✏️ 編輯「${selPanel.code} ${selPanel.name}」的 2D 切割與雕刻</span>`;
+        $('#selectedFaceCaption').textContent = `目前選取：${selPanel.code} ${selPanel.name} (${selPanel.w} × ${selPanel.h} mm)。可加入開孔、散熱槽或雷射文字雕刻。`;
+      } else {
+        btn2D.disabled = true;
+      }
+
+      // Metrics
+      const areaCm2 = Math.round((W * D) / 100);
+      const volL = ((W * D * H) / 1e6).toFixed(2);
+      $('#metEdges').textContent = panels.filter(p => p.enabled).length * 2;
+      $('#metArea').textContent = `${areaCm2} cm²`;
+      $('#metVolume').textContent = `${volL} L`;
+    }
+
+    function rebuildAll() {
+      currentPanels = generateModelPanels();
+      renderLeftFaceList(currentPanels);
+      renderDividerListUI();
+      updateInspectorSummary(currentPanels);
+      render3DEnclosure(currentPanels);
+      localStorage.setItem('lasercraft_autosave_v4', JSON.stringify(state));
+      $('#saveStatusText').textContent = '已自動暫存';
+    }
+
+    function syncInputsFromState() {
+      $('#inpWidth').value = state.width;
+      $('#rngWidth').value = state.width;
+      $('#inpDepth').value = state.depth;
+      $('#rngDepth').value = state.depth;
+      $('#inpHeight').value = state.height;
+      $('#rngHeight').value = state.height;
+      $('#inpThickness').value = state.thickness;
+      $('#inpTabWidth').value = state.tabWidth;
+      $('#rngTabWidth').value = state.tabWidth;
+      $('#inpKerf').value = state.kerf;
+      $('#inpTopRX').value = state.topRX;
+      $('#rngTopRX').value = state.topRX;
+      $('#inpTopRZ').value = state.topRZ;
+      $('#rngTopRZ').value = state.topRZ;
+      $('#inpSideAll').value = state.sideAngles.all;
+      $('#rngSideAll').value = state.sideAngles.all;
+      $('#inpSideF').value = state.sideAngles.front;
+      $('#inpSideB').value = state.sideAngles.back;
+      $('#inpSideL').value = state.sideAngles.left;
+      $('#inpSideR').value = state.sideAngles.right;
+      $('#inpBevelInset').value = state.bevelInset;
+      $('#rngBevelInset').value = state.bevelInset;
+      $('#inpBevelDrop').value = state.bevelDrop;
+      $('#rngBevelDrop').value = state.bevelDrop;
+      $('#btnTabFull').classList.toggle('active', state.tabMode === 'full');
+      $('#btnTabFlush').classList.toggle('active', state.tabMode === 'flush');
+      $$('[data-thick]').forEach(c => c.classList.toggle('active', +c.dataset.thick === +state.thickness));
+    }
+
+    /* ==========================================================================
+       2D PANEL CUTOUT & ENGRAVING EDITOR
+       ========================================================================== */
+    function open2DFaceEditor() {
+      const p = currentPanels.find(x => x.code === state.selectedFace) || currentPanels[0];
+      if (!p) return;
+      state.selectedFace = p.code;
+      $('#editor2DTitle').textContent = `編輯面板「${p.code} ${p.name}」(${p.w} × ${p.h} mm) 的 2D 切割與雕刻`;
+      if (!state.faceShapes[p.code]) state.faceShapes[p.code] = [];
+      render2DFaceEditor();
+      $('#modal2DEditor').classList.add('open');
+    }
+
+    function render2DFaceEditor() {
+      const p = currentPanels.find(x => x.code === state.selectedFace);
+      if (!p) return;
+      const shapes = state.faceShapes[p.code] || [];
+      const pad = 25;
+      const vw = p.w + pad * 2;
+      const vh = p.h + pad * 2;
+      const ptsAttr = p.contour.map(pt => `${(pt.x + vw / 2).toFixed(2)},${(-pt.y + vh / 2).toFixed(2)}`).join(' ');
+
+      let shapesSvg = '';
+      shapes.forEach((sh) => {
+        const isSel = sh.id === state.selectedShapeId;
+        const cx = sh.x + vw / 2;
+        const cy = -sh.y + vh / 2;
+        const stroke = sh.mode === 'engrave' ? '#0284C7' : '#E11D48';
+        const fill = sh.mode === 'engrave' ? 'rgba(2,132,199,0.22)' : 'rgba(225,29,72,0.08)';
+        const sw = isSel ? 1.4 : 0.7;
+
+        if (sh.type === 'circle') {
+          shapesSvg += `<circle data-shid="${sh.id}" cx="${cx}" cy="${cy}" r="${sh.w / 2}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" style="cursor:pointer"/>`;
+        } else if (sh.type === 'rrect') {
+          shapesSvg += `<rect data-shid="${sh.id}" x="${cx - sh.w / 2}" y="${cy - sh.h / 2}" width="${sh.w}" height="${sh.h}" rx="4" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" style="cursor:pointer"/>`;
+        } else if (sh.type === 'vents') {
+          const slots = 4;
+          const slotH = Math.max(2.5, sh.h / 7);
+          for (let s = 0; s < slots; s++) {
+            const sy = cy + (s - (slots - 1) / 2) * (slotH * 2.1);
+            shapesSvg += `<rect data-shid="${sh.id}" x="${cx - sh.w / 2}" y="${sy - slotH / 2}" width="${sh.w}" height="${slotH}" rx="${slotH / 2}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" style="cursor:pointer"/>`;
+          }
+        } else if (sh.type === 'text') {
+          shapesSvg += `<text data-shid="${sh.id}" x="${cx}" y="${cy}" fill="#0284C7" font-size="${Math.max(5, sh.h)}" font-family="Inter,Noto Sans TC,sans-serif" font-weight="800" text-anchor="middle" dominant-baseline="central" style="cursor:pointer">${sh.text || 'LASER'}</text>`;
+        } else {
+          shapesSvg += `<rect data-shid="${sh.id}" x="${cx - sh.w / 2}" y="${cy - sh.h / 2}" width="${sh.w}" height="${sh.h}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" style="cursor:pointer"/>`;
+        }
+      });
+
+      $('#face2DSvgPreview').innerHTML = `
+        <svg viewBox="0 0 ${vw} ${vh}" style="width:min(540px,72vw);height:auto;display:block;">
+          <line x1="0" y1="${vh / 2}" x2="${vw}" y2="${vh / 2}" stroke="#CBD5E1" stroke-dasharray="2,2" stroke-width="0.4"/>
+          <line x1="${vw / 2}" y1="0" x2="${vw / 2}" y2="${vh}" stroke="#CBD5E1" stroke-dasharray="2,2" stroke-width="0.4"/>
+          <polygon points="${ptsAttr}" fill="rgba(37,99,235,0.05)" stroke="#0F172A" stroke-width="0.8"/>
+          ${shapesSvg}
+        </svg>
+      `;
+
+      $$('#face2DSvgPreview [data-shid]').forEach(el => {
+        el.onclick = () => {
+          state.selectedShapeId = el.dataset.shid;
+          render2DFaceEditor();
+        };
+      });
+
+      // Render Right-side Shape List
+      const listEl = $('#shapeList2D');
+      if (!shapes.length) {
+        listEl.innerHTML = `<div style="font-size:11.5px;color:var(--text-muted);">此面板尚無開孔或雕刻圖形，請點選上方工具列新增。</div>`;
+        $('#shapePropEditor').style.display = 'none';
+      } else {
+        listEl.innerHTML = shapes.map((s, idx) => `
+          <button type="button" class="bevel-btn ${s.id === state.selectedShapeId ? 'active' : ''}" data-pick-shp="${s.id}">
+            <span>#${idx + 1} · ${s.type === 'circle' ? '圓孔' : s.type === 'vents' ? '散熱格柵' : s.type === 'text' ? `文字「${s.text}」` : '矩形孔'}</span>
+            <span class="mono" style="font-size:10.5px;">${s.mode === 'engrave' ? '🔵雕刻' : '🔴切割'}</span>
+          </button>
+        `).join('');
+
+        $$('[data-pick-shp]').forEach(b => {
+          b.onclick = () => {
+            state.selectedShapeId = b.dataset.pickShp;
+            render2DFaceEditor();
+          };
+        });
+
+        const cur = shapes.find(s => s.id === state.selectedShapeId) || shapes[0];
+        state.selectedShapeId = cur.id;
+        $('#shapePropEditor').style.display = 'flex';
+        $('#btnModeCut').classList.toggle('active', cur.mode !== 'engrave');
+        $('#btnModeEngrave').classList.toggle('active', cur.mode === 'engrave');
+        $('#shpX').value = cur.x;
+        $('#shpY').value = cur.y;
+        $('#shpW').value = cur.w;
+        $('#shpH').value = cur.h;
+        $('#rowShpText').style.display = cur.type === 'text' ? 'grid' : 'none';
+        $('#shpTextVal').value = cur.text || 'LASERCRAFT';
+      }
+      rebuildAll();
+    }
+
+    function add2DShape(type) {
+      const code = state.selectedFace;
+      if (!state.faceShapes[code]) state.faceShapes[code] = [];
+      const id = 'sh_' + Date.now() + '_' + Math.floor(Math.random() * 999);
+      const newShp = {
+        id,
+        type,
+        mode: type === 'text' ? 'engrave' : 'cut',
+        x: 0,
+        y: 0,
+        w: type === 'circle' ? 22 : type === 'vents' ? 50 : 40,
+        h: type === 'text' ? 10 : type === 'vents' ? 28 : 24,
+        text: 'LASERCRAFT'
+      };
+      state.faceShapes[code].push(newShp);
+      state.selectedShapeId = id;
+      pushHistory();
+      render2DFaceEditor();
+    }
+    /* ==========================================================================
+       1:1 MILLIMETER NESTING & SVG / DXF EXPORT ENGINE
+       ========================================================================== */
+    function computeNestingLayout() {
+      const activePanels = currentPanels.filter(p => p.enabled);
+      const gap = Math.max(1, +$('#inpPartGap').value || 6);
+      const t = +state.thickness || 3;
+      const preset = $('#selSheetPreset').value;
+      let sheetW = Math.max(120, +$('#inpSheetW').value || 600);
+      let sheetH = Math.max(120, +$('#inpSheetH').value || 400);
+
+      // Shelf bin-packing algorithm
+      let curX = gap + t;
+      let curY = gap + t;
+      let rowH = 0;
+      let maxUsedX = 0;
+      let maxUsedY = 0;
+      let totalPartArea = 0;
+
+      const placed = activePanels.map((p) => {
+        const bw = p.w + t * 2;
+        const bh = p.h + t * 2;
+        totalPartArea += bw * bh;
+
+        if (curX + bw + gap > sheetW && curX > gap + t) {
+          curX = gap + t;
+          curY += rowH + gap;
+          rowH = 0;
+        }
+        const item = {
+          panel: p,
+          cx: curX + bw / 2,
+          cy: curY + bh / 2,
+          bw,
+          bh
+        };
+        curX += bw + gap;
+        rowH = Math.max(rowH, bh);
+        maxUsedX = Math.max(maxUsedX, curX);
+        maxUsedY = Math.max(maxUsedY, curY + rowH + gap);
+        return item;
+      });
+
+      if (preset === 'auto') {
+        sheetW = Math.max(200, Math.ceil(maxUsedX + gap));
+        sheetH = Math.max(150, Math.ceil(maxUsedY + gap));
+      } else {
+        sheetH = Math.max(sheetH, Math.ceil(maxUsedY + gap));
+      }
+
+      const util = Math.min(96, Math.round((totalPartArea / (sheetW * sheetH)) * 100));
+      return { placed, sheetW, sheetH, util, count: activePanels.length };
+    }
+
+    function buildNestedSVGString(forDownload = false) {
+      const { placed, sheetW, sheetH, util, count } = computeNestingLayout();
+      const showLabels = $('#chkExportLabels').checked;
+      $('#expStatCount').textContent = `${count} 片`;
+      $('#expStatUtil').textContent = `${util}%`;
+
+      let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${sheetW}mm" height="${sheetH}mm" viewBox="0 0 ${sheetW} ${sheetH}">\n`;
+      svg += `  <title>${state.projectName} - LaserCraft Studio 1:1 Layout</title>\n`;
+      if (!forDownload) {
+        svg += `  <rect x="0.5" y="0.5" width="${sheetW - 1}" height="${sheetH - 1}" fill="#FCFBF9" stroke="#94A3B8" stroke-dasharray="4,3" stroke-width="0.8"/>\n`;
+      }
+
+      // Layer 1: Laser Cut Paths (Red/Black 0.25mm hairlines)
+      svg += `  <g id="LASER_CUT" fill="none" stroke="#E11D48" stroke-width="${forDownload ? '0.2' : '0.6'}">\n`;
+      placed.forEach(({ panel, cx, cy }) => {
+        const pts = panel.contour.map(pt => `${(cx + pt.x).toFixed(2)},${(cy - pt.y).toFixed(2)}`).join(' ');
+        svg += `    <polygon points="${pts}" />\n`;
+
+        panel.holes.forEach((h) => {
+          const hx = cx + (+h.x || 0);
+          const hy = cy - (+h.y || 0);
+          if (h.type === 'circle') {
+            svg += `    <circle cx="${hx.toFixed(2)}" cy="${hy.toFixed(2)}" r="${(h.w / 2).toFixed(2)}" />\n`;
+          } else if (h.type === 'rrect') {
+            svg += `    <rect x="${(hx - h.w / 2).toFixed(2)}" y="${(hy - h.h / 2).toFixed(2)}" width="${h.w}" height="${h.h}" rx="4" />\n`;
+          } else if (h.type === 'vents') {
+            const slots = 4;
+            const slotH = Math.max(2.5, h.h / 7);
+            for (let s = 0; s < slots; s++) {
+              const sy = hy + (s - (slots - 1) / 2) * (slotH * 2.1);
+              svg += `    <rect x="${(hx - h.w / 2).toFixed(2)}" y="${(sy - slotH / 2).toFixed(2)}" width="${h.w}" height="${slotH.toFixed(2)}" rx="${(slotH / 2).toFixed(2)}" />\n`;
+            }
+          } else if (h.type !== 'text') {
+            svg += `    <rect x="${(hx - h.w / 2).toFixed(2)}" y="${(hy - h.h / 2).toFixed(2)}" width="${h.w}" height="${h.h}" />\n`;
+          }
+        });
+      });
+      svg += `  </g>\n`;
+
+      // Layer 2: Laser Engraving & Labels (Blue Layer)
+      svg += `  <g id="LASER_ENGRAVE" fill="#0284C7" stroke="none" font-family="Inter,Noto Sans TC,sans-serif">\n`;
+      placed.forEach(({ panel, cx, cy }) => {
+        if (showLabels) {
+          svg += `    <text x="${cx.toFixed(2)}" y="${(cy - 3).toFixed(2)}" font-size="5" font-weight="700" text-anchor="middle">${panel.code} ${panel.name}</text>\n`;
+          svg += `    <text x="${cx.toFixed(2)}" y="${(cy + 4).toFixed(2)}" font-size="3.6" text-anchor="middle">${panel.w}×${panel.h}mm</text>\n`;
+        }
+        panel.engravings.forEach((eg) => {
+          const ex = cx + (+eg.x || 0);
+          const ey = cy - (+eg.y || 0);
+          if (eg.type === 'text') {
+            svg += `    <text x="${ex.toFixed(2)}" y="${ey.toFixed(2)}" font-size="${Math.max(4, eg.h)}" font-weight="800" text-anchor="middle" dominant-baseline="central">${eg.text || 'LASER'}</text>\n`;
+          } else if (eg.type === 'circle') {
+            svg += `    <circle cx="${ex.toFixed(2)}" cy="${ey.toFixed(2)}" r="${(eg.w / 2).toFixed(2)}" fill="none" stroke="#0284C7" stroke-width="0.4" />\n`;
+          } else {
+            svg += `    <rect x="${(ex - eg.w / 2).toFixed(2)}" y="${(ey - eg.h / 2).toFixed(2)}" width="${eg.w}" height="${eg.h}" fill="none" stroke="#0284C7" stroke-width="0.4" />\n`;
+          }
+        });
+      });
+      svg += `  </g>\n</svg>`;
+      return svg;
+    }
+
+    function buildDXFString() {
+      const { placed, sheetH } = computeNestingLayout();
+      let dxf = `0\nSECTION\n2\nENTITIES\n`;
+      function addLine(x1, y1, x2, y2, layer = 'CUT') {
+        dxf += `0\nLINE\n8\n${layer}\n10\n${x1.toFixed(3)}\n20\n${(sheetH - y1).toFixed(3)}\n30\n0.0\n11\n${x2.toFixed(3)}\n21\n${(sheetH - y2).toFixed(3)}\n31\n0.0\n`;
+      }
+      placed.forEach(({ panel, cx, cy }) => {
+        const pts = panel.contour.map(pt => ({ x: cx + pt.x, y: cy - pt.y }));
+        for (let i = 0; i < pts.length; i++) {
+          const a = pts[i];
+          const b = pts[(i + 1) % pts.length];
+          addLine(a.x, a.y, b.x, b.y, 'CUT');
+        }
+        panel.holes.forEach((h) => {
+          const hx = cx + (+h.x || 0);
+          const hy = cy - (+h.y || 0);
+          const x0 = hx - h.w / 2, x1 = hx + h.w / 2;
+          const y0 = hy - h.h / 2, y1 = hy + h.h / 2;
+          addLine(x0, y0, x1, y0, 'CUT');
+          addLine(x1, y0, x1, y1, 'CUT');
+          addLine(x1, y1, x0, y1, 'CUT');
+          addLine(x0, y1, x0, y0, 'CUT');
+        });
+      });
+      dxf += `0\nENDSEC\n0\nEOF\n`;
+      return dxf;
+    }
+
+    function openExportModal() {
+      const svg = buildNestedSVGString(false);
+      $('#nestingSvgContainer').innerHTML = svg;
+      const svgEl = $('#nestingSvgContainer svg');
+      if (svgEl) {
+        svgEl.style.width = 'min(640px, 68vw)';
+        svgEl.style.height = 'auto';
+      }
+      $('#modalExport').classList.add('open');
+    }
+
+    /* ==========================================================================
+       WEB MODEL LIBRARY & PRESET TEMPLATES
+       ========================================================================== */
+    function getSavedLibrary() {
+      try {
+        return JSON.parse(localStorage.getItem('lasercraft_library_v4') || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function saveLibraryList(list) {
+      localStorage.setItem('lasercraft_library_v4', JSON.stringify(list));
+      $('#libCountBadge').textContent = list.length;
+    }
+
+    function renderLibraryModal() {
+      const list = getSavedLibrary();
+      $('#libCountBadge').textContent = list.length;
+      $('#inpSaveModelName').value = state.projectName;
+      const wrap = $('#libraryListContainer');
+      if (!list.length) {
+        wrap.innerHTML = `<div style="padding:18px;text-align:center;color:var(--text-muted);border:1px dashed var(--border-strong);border-radius:10px;">目前尚未儲存模型，輸入名稱後點擊「儲存目前設計」即可加入網頁模型庫。</div>`;
+        return;
+      }
+      wrap.innerHTML = list.map((item, idx) => `
+        <div class="face-row" style="padding:10px 12px;">
+          <div>
+            <div style="font-weight:800;font-size:13.5px;">${item.name}</div>
+            <div class="mono" style="font-size:11px;color:var(--text-muted);">${item.summary} · 儲存於 ${item.date}</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="pill-btn" data-load-lib="${idx}" style="color:var(--accent);border-color:var(--accent);">📂 載入模型</button>
+            <button type="button" class="pill-btn" data-del-lib="${idx}" style="color:var(--laser-cut);">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+
+      $$('[data-load-lib]').forEach(b => {
+        b.onclick = () => {
+          const item = list[+b.dataset.loadLib];
+          if (item && item.snapshot) {
+            applySnapshot(item.snapshot);
+            $('#modalLibrary').classList.remove('open');
+            showToast(`已載入模型「${item.name}」`);
+          }
+        };
+      });
+      $$('[data-del-lib]').forEach(b => {
+        b.onclick = () => {
+          list.splice(+b.dataset.delLib, 1);
+          saveLibraryList(list);
+          renderLibraryModal();
+          showToast('已從模型庫移除記錄');
+        };
+      });
+    }
+
+    function applyTemplatePreset(tpl) {
+      const base = createDefaultState();
+      base.thickness = state.thickness;
+      base.tabWidth = state.tabWidth;
+      base.materialPreset = state.materialPreset;
+
+      if (tpl === 'box') {
+        base.projectName = '標準矩形外殼';
+      } else if (tpl === 'polygon') {
+        base.modelKind = 'polygon';
+        base.polySides = +$('#selPolySides').value || 6;
+        base.width = 180;
+        base.height = 110;
+        base.projectName = `正 ${base.polySides} 角柱外殼`;
+      } else if (tpl === 'platonic') {
+        base.modelKind = 'platonic';
+        base.platonicKind = $('#selPlatonicKind').value || 'dodeca';
+        base.width = 180;
+        base.projectName = `幾何多面體 (${base.platonicKind})`;
+      } else if (tpl === 'bevel-front') {
+        base.projectName = '方形切斜邊控制盒';
+        base.width = 210; base.depth = 160; base.height = 95;
+        base.bevels = ['edge-front'];
+        base.bevelInset = 45; base.bevelDrop = 32;
+      } else if (tpl === 'bevel-corner') {
+        base.projectName = '方形切斜角展示盒';
+        base.width = 190; base.depth = 160; base.height = 95;
+        base.bevels = ['corner-fr'];
+        base.bevelInset = 48; base.bevelDrop = 36;
+      } else if (tpl === 'tri-tower') {
+        base.modelKind = 'polygon';
+        base.polySides = 3;
+        base.width = 170; base.height = 140;
+        base.projectName = '三角形塔柱外殼';
+      } else if (tpl === 'hex-tower') {
+        base.modelKind = 'polygon';
+        base.polySides = 6;
+        base.width = 175; base.height = 130;
+        base.projectName = '六角形收納塔柱';
+      } else if (tpl === 'pyramid') {
+        base.projectName = '正方金字塔台座';
+        base.width = 190; base.depth = 190; base.height = 110;
+        base.sideSync = true;
+        base.sideAngles.all = 18;
+      } else if (tpl === 'pent-slant') {
+        base.projectName = '斜蓋分隔展示盒';
+        base.width = 220; base.depth = 160; base.height = 100;
+        base.topRX = 16;
+        base.dividers = [{ id: 'd1', dir: 'lr', offset: 0, tilt: 0, tabs: true }];
+      }
+
+      state = base;
+      syncInputsFromState();
+      pushHistory();
+      rebuildAll();
+      setCameraView('iso');
+      $('#modalNewModel').classList.remove('open');
+      showToast(`已建立「${state.projectName}」`);
+    }
+
+    /* ==========================================================================
+       EVENT BINDINGS & INITIALIZATION
+       ========================================================================== */
+    function bindAllEvents() {
+      // Theme & Material Switchers
+      $('#themeSelect').onchange = (e) => {
+        document.documentElement.setAttribute('data-theme', e.target.value);
+        showToast(`已切換介面主題：${e.target.options[e.target.selectedIndex].text}`);
+      };
+      $('#matSelectTop').onchange = (e) => {
+        state.materialPreset = e.target.value;
+        rebuildAll();
+      };
+
+      // Rename Project
+      $('#btnRenameProject').onclick = () => {
+        const next = prompt('請輸入外殼專案名稱：', state.projectName);
+        if (next && next.trim()) {
+          state.projectName = next.trim();
+          pushHistory();
+          rebuildAll();
+        }
+      };
+
+      // Undo / Redo
+      $('#btnUndo').onclick = () => {
+        if (historyStack.length > 1) {
+          redoStack.push(historyStack.pop());
+          applySnapshot(historyStack[historyStack.length - 1]);
+          showToast('已復原上一步變更');
+        }
+      };
+      $('#btnRedo').onclick = () => {
+        if (redoStack.length) {
+          const next = redoStack.pop();
+          historyStack.push(next);
+          applySnapshot(next);
+          showToast('已重做變更');
+        }
+      };
+
+      // Left Rail Quick Actions
+      $('#btnAllUse').onclick = () => {
+        Object.keys(state.panelStates).forEach(k => state.panelStates[k].enabled = true);
+        pushHistory();
+        rebuildAll();
+        showToast('已啟用全部面板');
+      };
+      $('#btnOpenTopBox').onclick = () => {
+        Object.keys(state.panelStates).forEach(k => state.panelStates[k].enabled = true);
+        const topCode = state.modelKind === 'box' ? 'E' : 'A';
+        if (state.panelStates[topCode]) state.panelStates[topCode].enabled = false;
+        pushHistory();
+        rebuildAll();
+        showToast('已切換為無上蓋開放收納盒模式');
+      };
+      $('#btnToggleAllTabs').onclick = () => {
+        const keys = Object.keys(state.panelStates);
+        const anyFalse = keys.some(k => !state.panelStates[k].tabs);
+        keys.forEach(k => state.panelStates[k].tabs = anyFalse);
+        pushHistory();
+        rebuildAll();
+        showToast(anyFalse ? '已全部改為卡榫接合板' : '已全部改為無卡榫平面板');
+      };
+
+      // Sidebar Collapse Handles
+      $('#btnToggleLeft').onclick = () => {
+        $('#workspaceGrid').classList.toggle('hide-left');
+        setTimeout(onWindowResize, 240);
+      };
+      $('#btnToggleRight').onclick = () => {
+        $('#workspaceGrid').classList.toggle('hide-right');
+        setTimeout(onWindowResize, 240);
+      };
+
+      // 3D HUD Toggles
+      $('#btnShowDims').onclick = (e) => {
+        state.showDims = !state.showDims;
+        e.currentTarget.classList.toggle('active', state.showDims);
+        rebuildAll();
+      };
+      $('#btnShowCodes').onclick = (e) => {
+        state.showCodes = !state.showCodes;
+        e.currentTarget.classList.toggle('active', state.showCodes);
+        rebuildAll();
+      };
+      $('#btnShowWire').onclick = (e) => {
+        state.showWire = !state.showWire;
+        e.currentTarget.classList.toggle('active', state.showWire);
+        rebuildAll();
+      };
+      $('#explodeRange').oninput = (e) => {
+        state.explode = +e.target.value || 0;
+        render3DEnclosure(currentPanels);
+      };
+
+      // Camera View Buttons
+      $$('[data-cam]').forEach(btn => {
+        btn.onclick = () => {
+          $$('[data-cam]').forEach(x => x.classList.remove('active'));
+          btn.classList.add('active');
+          setCameraView(btn.dataset.cam);
+        };
+      });
+
+      // Dimension Number + Range Sync
+      const pairs = [
+        ['inpWidth', 'rngWidth', 'width'],
+        ['inpDepth', 'rngDepth', 'depth'],
+        ['inpHeight', 'rngHeight', 'height'],
+        ['inpTabWidth', 'rngTabWidth', 'tabWidth'],
+        ['inpTopRX', 'rngTopRX', 'topRX'],
+        ['inpTopRZ', 'rngTopRZ', 'topRZ'],
+        ['inpBevelInset', 'rngBevelInset', 'bevelInset'],
+        ['inpBevelDrop', 'rngBevelDrop', 'bevelDrop']
+      ];
+      pairs.forEach(([numId, rngId, prop]) => {
+        const numEl = $('#' + numId);
+        const rngEl = $('#' + rngId);
+        numEl.oninput = () => {
+          state[prop] = +numEl.value;
+          rngEl.value = numEl.value;
+          rebuildAll();
+        };
+        numEl.onchange = () => pushHistory();
+        rngEl.oninput = () => {
+          state[prop] = +rngEl.value;
+          numEl.value = rngEl.value;
+          rebuildAll();
+        };
+        rngEl.onchange = () => pushHistory();
+      });
+
+      $('#btnResetDims').onclick = () => {
+        state.width = 200; state.depth = 150; state.height = 80;
+        syncInputsFromState(); pushHistory(); rebuildAll();
+        showToast('尺寸已重設為 200 × 150 × 80 mm');
+      };
+      $('#btnResetTopTilt').onclick = () => {
+        state.topRX = 0; state.topRZ = 0;
+        syncInputsFromState(); pushHistory(); rebuildAll();
+        showToast('上蓋傾角已歸零');
+      };
+      $('#btnResetSideAngles').onclick = () => {
+        state.sideAngles = { all: 0, front: 0, back: 0, left: 0, right: 0 };
+        syncInputsFromState(); pushHistory(); rebuildAll();
+        showToast('四片側板已回到垂直 0°');
+      };
+
+      // Side Angles Sync vs Individual
+      $('#btnSideSync').onclick = () => {
+        state.sideSync = true;
+        $('#btnSideSync').classList.add('active');
+        $('#btnSideIndiv').classList.remove('active');
+        $('#sideSyncWrap').style.display = 'grid';
+        $('#sideIndivWrap').style.display = 'none';
+        rebuildAll();
+      };
+      $('#btnSideIndiv').onclick = () => {
+        state.sideSync = false;
+        $('#btnSideIndiv').classList.add('active');
+        $('#btnSideSync').classList.remove('active');
+        $('#sideSyncWrap').style.display = 'none';
+        $('#sideIndivWrap').style.display = 'flex';
+        rebuildAll();
+      };
+      $('#inpSideAll').oninput = (e) => {
+        state.sideAngles.all = +e.target.value;
+        $('#rngSideAll').value = e.target.value;
+        rebuildAll();
+      };
+      $('#rngSideAll').oninput = (e) => {
+        state.sideAngles.all = +e.target.value;
+        $('#inpSideAll').value = e.target.value;
+        rebuildAll();
+      };
+      [['inpSideF', 'front'], ['inpSideB', 'back'], ['inpSideL', 'left'], ['inpSideR', 'right']].forEach(([id, k]) => {
+        $('#' + id).oninput = (e) => {
+          state.sideAngles[k] = +e.target.value || 0;
+          rebuildAll();
+        };
+      });
+
+      // Bevel Multi-Select Buttons
+      $$('[data-bevel]').forEach(btn => {
+        btn.onclick = () => {
+          const key = btn.dataset.bevel;
+          const idx = state.bevels.indexOf(key);
+          if (idx >= 0) state.bevels.splice(idx, 1);
+          else state.bevels.push(key);
+          pushHistory();
+          rebuildAll();
+        };
+      });
+
+      // Dividers Add Buttons
+      function addDivider(dir) {
+        state.dividers.push({
+          id: 'div_' + Date.now(),
+          dir,
+          offset: state.dividers.length * 24 - 12,
+          tilt: 0,
+          tabs: true
+        });
+        pushHistory();
+        rebuildAll();
+        showToast('已新增內部自由隔板');
+      }
+      $('#btnAddDivLR').onclick = () => addDivider('lr');
+      $('#btnAddDivFB').onclick = () => addDivider('fb');
+      $('#btnAddDivHZ').onclick = () => addDivider('hz');
+
+      // Material Thickness & Tab Mode
+      $$('[data-thick]').forEach(chip => {
+        chip.onclick = () => {
+          state.thickness = +chip.dataset.thick;
+          syncInputsFromState();
+          pushHistory();
+          rebuildAll();
+        };
+      });
+      $('#inpThickness').oninput = (e) => {
+        state.thickness = Math.max(1, +e.target.value || 3);
+        rebuildAll();
+      };
+      $('#inpKerf').oninput = (e) => {
+        state.kerf = Math.max(0, +e.target.value || 0);
+        rebuildAll();
+      };
+      $('#btnTabFull').onclick = () => {
+        state.tabMode = 'full';
+        syncInputsFromState(); pushHistory(); rebuildAll();
+      };
+      $('#btnTabFlush').onclick = () => {
+        state.tabMode = 'flush';
+        syncInputsFromState(); pushHistory(); rebuildAll();
+      };
+
+      // Modals Open/Close
+      $('#btnNewModel').onclick = () => $('#modalNewModel').classList.add('open');
+      $('#btnOpen2DEditor').onclick = open2DFaceEditor;
+      $('#btnExportTop').onclick = openExportModal;
+      $('#btnExportBottom').onclick = openExportModal;
+      $('#btnOpenLibrary').onclick = () => { renderLibraryModal(); $('#modalLibrary').classList.add('open'); };
+      $('#btnSaveLibrary').onclick = () => { renderLibraryModal(); $('#modalLibrary').classList.add('open'); };
+      $('#btnHelpTop').onclick = () => $('#modalHelp').classList.add('open');
+      $('#btnHelpBottom').onclick = () => $('#modalHelp').classList.add('open');
+
+      $$('[data-close]').forEach(btn => {
+        btn.onclick = () => $('#' + btn.dataset.close).classList.remove('open');
+      });
+      $$('.modal-backdrop').forEach(bd => {
+        bd.addEventListener('click', (e) => {
+          if (e.target === bd) bd.classList.remove('open');
+        });
+      });
+
+      // Template Selection in New Model Modal
+      $$('[data-tpl]').forEach(card => {
+        card.addEventListener('click', (e) => {
+          if (e.target.tagName === 'SELECT') return;
+          applyTemplatePreset(card.dataset.tpl);
+        });
+      });
+      $('#selPolySides').onchange = () => applyTemplatePreset('polygon');
+      $('#selPlatonicKind').onchange = () => applyTemplatePreset('platonic');
+
+      // 2D Editor Controls
+      $('#btnAddRect').onclick = () => add2DShape('rect');
+      $('#btnAddRoundRect').onclick = () => add2DShape('rrect');
+      $('#btnAddCircle').onclick = () => add2DShape('circle');
+      $('#btnAddVents').onclick = () => add2DShape('vents');
+      $('#btnAddText').onclick = () => add2DShape('text');
+      $('#btnClearFaceShapes').onclick = () => {
+        state.faceShapes[state.selectedFace] = [];
+        pushHistory();
+        render2DFaceEditor();
+      };
+
+      function getCurrent2DShape() {
+        const list = state.faceShapes[state.selectedFace] || [];
+        return list.find(s => s.id === state.selectedShapeId);
+      }
+      $('#btnModeCut').onclick = () => { const s = getCurrent2DShape(); if (s) { s.mode = 'cut'; render2DFaceEditor(); } };
+      $('#btnModeEngrave').onclick = () => { const s = getCurrent2DShape(); if (s) { s.mode = 'engrave'; render2DFaceEditor(); } };
+      ['shpX', 'shpY', 'shpW', 'shpH'].forEach(id => {
+        $('#' + id).oninput = (e) => {
+          const s = getCurrent2DShape();
+          if (!s) return;
+          const prop = id === 'shpX' ? 'x' : id === 'shpY' ? 'y' : id === 'shpW' ? 'w' : 'h';
+          s[prop] = +e.target.value || 0;
+          render2DFaceEditor();
+        };
+      });
+      $('#shpTextVal').oninput = (e) => {
+        const s = getCurrent2DShape();
+        if (s) { s.text = e.target.value; render2DFaceEditor(); }
+      };
+      $('#btnCenterShp').onclick = () => {
+        const s = getCurrent2DShape();
+        if (s) { s.x = 0; s.y = 0; render2DFaceEditor(); }
+      };
+      $('#btnDeleteShp').onclick = () => {
+        const list = state.faceShapes[state.selectedFace] || [];
+        state.faceShapes[state.selectedFace] = list.filter(s => s.id !== state.selectedShapeId);
+        render2DFaceEditor();
+      };
+
+      // Export Modal Controls
+      $('#selSheetPreset').onchange = (e) => {
+        const val = e.target.value;
+        if (val !== 'auto') {
+          const [w, h] = val.split('x').map(Number);
+          $('#inpSheetW').value = w;
+          $('#inpSheetH').value = h;
+        }
+        openExportModal();
+      };
+      ['inpSheetW', 'inpSheetH', 'inpPartGap', 'chkExportLabels'].forEach(id => {
+        $('#' + id).oninput = () => openExportModal();
+        $('#' + id).onchange = () => openExportModal();
+      });
+
+      $('#btnDownloadSVG').onclick = () => {
+        const svgStr = buildNestedSVGString(true);
+        const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${state.projectName}_1to1_lasercut.svg`;
+        a.click();
+        showToast('已下載 1:1 雷切 SVG 檔案');
+      };
+      $('#btnDownloadDXF').onclick = () => {
+        const dxfStr = buildDXFString();
+        const blob = new Blob([dxfStr], { type: 'application/dxf' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${state.projectName}_1to1_lasercut.dxf`;
+        a.click();
+        showToast('已下載 AutoCAD R12 .DXF 雷切檔案');
+      };
+
+      // Library Save
+      $('#btnConfirmSaveLib').onclick = () => {
+        const name = ($('#inpSaveModelName').value || state.projectName || '未命名外殼').trim();
+        state.projectName = name;
+        const list = getSavedLibrary();
+        list.unshift({
+          name,
+          summary: `${state.width}×${state.depth}×${state.height}mm · 厚${state.thickness}mm`,
+          date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          snapshot: JSON.stringify(state)
+        });
+        saveLibraryList(list);
+        renderLibraryModal();
+        rebuildAll();
+        showToast(`已將「${name}」儲存至網頁模型庫`);
+      };
+    }
+
+    // Boot Application
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem('lasercraft_autosave_v4') || 'null');
+        if (saved && saved.width) {
+          Object.assign(state, saved);
+        }
+      } catch (e) {}
+      initThreeScene();
+      syncInputsFromState();
+      bindAllEvents();
+      pushHistory();
+      rebuildAll();
+      $('#libCountBadge').textContent = getSavedLibrary().length;
+    });
+  </script>
+</body>
+</html>
