@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>懸吊振翅木鳥 (Flying Wooden Bird) 1:1 模板產生器與木工雷切實作說明書</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .print-card { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+    <!-- Top Navigation Bar -->
+    <nav class="no-print bg-slate-900 text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <span class="text-xl">🕊️</span>
+                <div>
+                    <span class="font-bold text-base tracking-wide">懸吊振翅木鳥專案</span>
+                    <span class="hidden sm:inline-block ml-2 text-xs bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full">v4.0 線上說明書</span>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="index.html" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-medium px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-sm">
+                    <span>🛠️</span> 開啟 1:1 模板與雷切產生器
+                </a>
+                <a href="懸吊振翅木鳥_1比1模板產生器與製作使用說明書.docx" download class="bg-slate-700 hover:bg-slate-600 text-slate-100 text-xs sm:text-sm font-medium px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 border border-slate-600">
+                    <span>📥</span> 下載 Word 說明書 (.docx)
+                </a>
+                <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-medium px-3.5 py-2 rounded-lg transition flex items-center gap-1.5">
+                    <span>🖨️</span> 列印說明書
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto p-4 md:p-8 space-y-6">
+        <!-- Title Banner -->
+        <header class="bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-800 text-white rounded-2xl shadow-lg p-6 md:p-8 border border-indigo-500/30 print-card">
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+                <span class="bg-amber-400 text-slate-950 text-xs font-extrabold px-3 py-1 rounded-full">v4.0 專版</span>
+                <span class="bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 text-xs px-3 py-1 rounded-full">支援木工線鋸 &amp; CO2 / 藍光雷射切割</span>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight leading-snug">
+                懸吊振翅木鳥 (Flying Wooden Bird)<br>
+                <span class="text-amber-300">1:1 模板產生器與木工雷切實作說明書</span>
+            </h1>
+            <p class="text-sm text-slate-300 mt-3">
+                適用版本：v4.0 自訂椴木板長寬厚與雷切公差補償專版 ｜ 支援木工線鋸與 CO2 / 藍光雷射切割
+            </p>
+        </header>
+
+        <!-- 一、系統簡介與核心特色 -->
+        <section class="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-slate-200 space-y-4 print-card">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+                <span class="bg-indigo-600 text-white w-7 h-7 rounded-lg flex items-center justify-center text-sm">一</span>
+                系統簡介與核心特色
+            </h2>
+            <p class="text-slate-700 leading-relaxed text-sm md:text-base">
+                本說明書對應「<strong>懸吊振翅木鳥 1:1 模板與雷切產生器 (v4.0)</strong>」，專為木工邊料升級再造、校園創客數位製造與雷射切割課程設計。使用者只需在網頁輸入手邊椴木板或實木料的「<strong>寬度 × 長度 × 厚度</strong>」，系統即可即時生成 1:1 施工紙模與 SVG 向量雷切檔。
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="font-bold text-indigo-900 text-sm mb-1">📏 自由輸入椴木板尺寸 (W × H × T)</div>
+                    <p class="text-xs text-slate-600 leading-relaxed">支援任意板材寬度、長度與實測厚度（精確至 0.1 mm），自動計算最佳疊合層數與配重。</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="font-bold text-indigo-900 text-sm mb-1">🧩 智慧動態排料引擎 (Auto-Nesting)</div>
+                    <p class="text-xs text-slate-600 leading-relaxed">根據輸入的板材面積，自動計算並排入多層鳥身（區分外層彩繪片與中央穿線夾心層）及成對翅膀。</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="font-bold text-indigo-900 text-sm mb-1">⚡ 雷切光斑公差補償 (Kerf Offset)</div>
+                    <p class="text-xs text-slate-600 leading-relaxed">內建 0.00 ~ 0.35 mm 公差縮減設定，自動修正十字對插拉球卡槽與竹籤定位銷孔徑，實現免膠緊配。</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div class="font-bold text-indigo-900 text-sm mb-1">⚙️ 機構幾何自動補償 &amp; 雙模式無損輸出</div>
+                    <p class="text-xs text-slate-600 leading-relaxed">隨翅膀疊合厚度自動計算「翼根 42° 防干涉斜磨寬度」，並依鳥身總厚外擴頂部橫桿吊孔跨距；支援 100% 實體比例列印與標準分色 SVG 匯出。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 二、懸吊振翅物理原理與雷切圖層色碼規範 -->
+        <section class="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-slate-200 space-y-5 print-card">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+                <span class="bg-indigo-600 text-white w-7 h-7 rounded-lg flex items-center justify-center text-sm">二</span>
+                懸吊振翅物理原理與雷切圖層色碼規範
+            </h2>
+
+            <div class="space-y-3">
+                <h3 class="font-bold text-base text-indigo-900">2.1 三點懸吊連桿振翅機構原理</h3>
+                <p class="text-sm text-slate-700">木鳥能優雅拍動雙翼的核心在於「<strong>背脊內側轉軸</strong>」與「<strong>翼面外側偏置吊點</strong>」構成的槓桿力矩差：</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-4">
+                        <div class="font-bold text-amber-900 text-sm mb-1">1. 內側活動鉸鏈（支點）</div>
+                        <p class="text-xs text-slate-700 leading-relaxed">左右翅膀根部內緣透過微型羊眼釘（或尼龍穿線結）固定於鳥身背脊兩側，作為自由旋轉軸。</p>
+                    </div>
+                    <div class="bg-sky-50/70 border border-sky-200 rounded-xl p-4">
+                        <div class="font-bold text-sky-900 text-sm mb-1">2. 外側偏置懸吊線（定長拉桿）</div>
+                        <p class="text-xs text-slate-700 leading-relaxed">由頂部平衡橫桿垂下兩條等長吊線，固定於翅膀根部往外偏置 8~10 mm 的懸吊孔上。</p>
+                    </div>
+                    <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4">
+                        <div class="font-bold text-emerald-900 text-sm mb-1">3. 中央重力與拉繩驅動（施力點）</div>
+                        <p class="text-xs text-slate-700 leading-relaxed">當向下拉動鳥腹重心下方的 3D 十字木球並放開時，鳥身重力帶著翅膀內側下沉，而外側懸吊線拉住翅膀外緣，形成力矩差驅動雙翼上下大幅拍動。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3 pt-2">
+                <h3 class="font-bold text-base text-indigo-900">2.2 模板與 SVG 雷切分色圖層定義表</h3>
+                <p class="text-sm text-slate-700">匯出之 SVG 檔案與列印紙模採用四色標準工程圖層，匯入 LightBurn、RDWorks 或 Illustrator 時可直接依顏色設定雷射功率與速度：</p>
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-left border-collapse text-xs md:text-sm">
+                        <thead>
+                            <tr class="bg-slate-800 text-white">
+                                <th class="p-3 font-semibold">圖層顏色</th>
+                                <th class="p-3 font-semibold">線條樣式</th>
+                                <th class="p-3 font-semibold">工程定義與用途</th>
+                                <th class="p-3 font-semibold">雷切機設定 / 手工木作操作建議</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr class="bg-red-50/40">
+                                <td class="p-3 font-bold text-red-600 whitespace-nowrap">
+                                    <span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-1.5 align-middle"></span>紅色實線 (#EF4444)
+                                </td>
+                                <td class="p-3 whitespace-nowrap">連續實線</td>
+                                <td class="p-3"><strong>外框切割線 (Cut)</strong><br><span class="text-slate-600 text-xs">鳥身、翅膀、橫桿、拉球外廓與夾心穿線槽</span></td>
+                                <td class="p-3 text-xs leading-relaxed"><strong>【雷切】</strong>高功率低速完全切穿<br><strong>【手工】</strong>使用線鋸機沿紅線鋸切</td>
+                            </tr>
+                            <tr class="bg-blue-50/40">
+                                <td class="p-3 font-bold text-blue-600 whitespace-nowrap">
+                                    <span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-1.5 align-middle"></span>藍色虛線 (#3B82F6)
+                                </td>
+                                <td class="p-3 whitespace-nowrap">虛線標記</td>
+                                <td class="p-3"><strong>彩繪分色線 &amp; 翼根防干涉斜磨線 (Score)</strong><br><span class="text-slate-600 text-xs">頭冠、鳥喙、尾羽分界與翼根內側斜磨區</span></td>
+                                <td class="p-3 text-xs leading-relaxed"><strong>【雷切】</strong>低功率高速淺雕劃線 (不切穿)<br><strong>【手工】</strong>作為遮蔽膠帶分色與砂紙斜磨基準</td>
+                            </tr>
+                            <tr class="bg-emerald-50/40">
+                                <td class="p-3 font-bold text-emerald-600 whitespace-nowrap">
+                                    <span class="inline-block w-3 h-3 rounded-full bg-emerald-500 mr-1.5 align-middle"></span>綠色圓圈 (#10B981)
+                                </td>
+                                <td class="p-3 whitespace-nowrap">小圓孔</td>
+                                <td class="p-3"><strong>五金與穿線孔 (Hole)</strong><br><span class="text-slate-600 text-xs">背脊關節孔、翅膀偏置懸吊孔、腹部重心孔</span></td>
+                                <td class="p-3 text-xs leading-relaxed"><strong>【雷切】</strong>先於外框切割前優先切穿圓孔<br><strong>【手工】</strong>用中心衝定位後以 Ø2.0mm 鑽頭鑽穿</td>
+                            </tr>
+                            <tr class="bg-purple-50/40">
+                                <td class="p-3 font-bold text-purple-700 whitespace-nowrap">
+                                    <span class="inline-block w-3 h-3 rounded-full bg-purple-600 mr-1.5 align-middle"></span>紫色圓圈/矩形 (#9333EA)
+                                </td>
+                                <td class="p-3 whitespace-nowrap">實線孔/槽</td>
+                                <td class="p-3"><strong>多層疊合定位銷孔 &amp; 緊配卡榫槽 (Dowel/Slot)</strong><br><span class="text-slate-600 text-xs">竹籤對位孔與 3D 拉球十字對插卡槽</span></td>
+                                <td class="p-3 text-xs leading-relaxed"><strong>【雷切】</strong>已扣除 Kerf 公差，直接切穿即可緊配<br><strong>【手工】</strong>插入 Ø3mm 竹籤對齊各層木板</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 三、網頁模板產生器操作說明 -->
+        <section class="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-slate-200 space-y-4 print-card">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+                <span class="bg-indigo-600 text-white w-7 h-7 rounded-lg flex items-center justify-center text-sm">三</span>
+                網頁模板產生器操作說明
+            </h2>
+            <ol class="space-y-3 text-sm text-slate-700">
+                <li class="flex gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <span class="bg-indigo-600 text-white font-bold text-xs px-2.5 py-1 rounded-lg h-fit whitespace-nowrap">步驟 1</span>
+                    <div><strong>啟動產生器網頁</strong> — 點擊上方「<a href="index.html" class="text-indigo-600 underline font-semibold">開啟 1:1 模板與雷切產生器</a>」切換至產生器畫面（或雙擊開啟 <code class="bg-slate-200 px-1.5 py-0.5 rounded text-xs">flying_wooden_bird_template_generator-v4.html</code>）。</div>
+                </li>
+                <li class="flex gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <span class="bg-indigo-600 text-white font-bold text-xs px-2.5 py-1 rounded-lg h-fit whitespace-nowrap">步驟 2</span>
+                    <div><strong>輸入椴木板或邊料尺寸 (寬 W × 長 H × 厚 T)</strong> — 於左側面板「1. 自訂椴木板尺寸」輸入手邊板材的寬度與長度（如雷切常用 300×300 mm 或 A4 210×297 mm），並用游標卡尺量測實際板厚輸入於「單板厚度 T」（如 3.0 mm 或 2.8 mm）。系統會自動算出鳥身建議疊合層數（預設總厚約 15 mm）與單翼層數（預設總厚約 6 mm）。</div>
+                </li>
+                <li class="flex gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <span class="bg-indigo-600 text-white font-bold text-xs px-2.5 py-1 rounded-lg h-fit whitespace-nowrap">步驟 3</span>
+                    <div><strong>設定定位銷孔徑與雷切公差補償 (Kerf Offset)</strong> — 若使用多層 3mm 椴木板疊合，建議將定位銷設為「3.0 mm（標準烤肉竹籤）」。若使用 CO2 雷切機，點擊「0.15 (CO2標準)」公差按鈕，系統會自動將 3.0 mm 的卡槽與定位孔縮減繪製為 2.85 mm，抵銷雷射燒蝕寬度。</div>
+                </li>
+                <li class="flex gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <span class="bg-indigo-600 text-white font-bold text-xs px-2.5 py-1 rounded-lg h-fit whitespace-nowrap">步驟 4</span>
+                    <div><strong>選擇鳥種款式與微調外觀比例</strong> — 於「2. 鳥種款式與零件尺寸」下拉選單切換「山雀款（短尾圓潤）」、「知更鳥款（標準流線）」或「老鷹款（修長滑翔翼）」，並可依喜好拉動滑桿微調鳥身長度、翼展與穿線孔徑。</div>
+                </li>
+                <li class="flex gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <span class="bg-indigo-600 text-white font-bold text-xs px-2.5 py-1 rounded-lg h-fit whitespace-nowrap">步驟 5</span>
+                    <div><strong>檢查邊界警示與匯出檔案</strong> — 確認右側畫布上方無出現紅色「超出邊界警示」後，點擊右上角「下載 1:1 SVG 雷切檔」供雷切機使用，或點擊「直接列印 1:1 紙模」（列印設定請務必選擇「實際大小 / 100% 縮放」，並以尺量測紙張右上角 50 mm 確認尺驗證比例無誤）。</div>
+                </li>
+            </ol>
+        </section>
+
+        <!-- 四、常用板材疊合配重與雷切公差速查表 -->
+        <section class="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-slate-200 space-y-4 print-card">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+                <span class="bg-indigo-600 text-white w-7 h-7 rounded-lg flex items-center justify-center text-sm">四</span>
+                常用板材疊合配重與雷切公差速查表
+            </h2>
+            <p class="text-sm text-slate-700">
+                為確保中央拉繩向下拉動後，鳥身具備足夠重力動能帶動雙翼回彈拍動，鳥身總厚度建議維持在 <strong>12 ~ 18 mm</strong> 之間。以下為不同板材之最佳參數配置：
+            </p>
+            <div class="overflow-x-auto rounded-xl border border-slate-200">
+                <table class="w-full text-left border-collapse text-xs md:text-sm">
+                    <thead>
+                        <tr class="bg-slate-800 text-white">
+                            <th class="p-3 font-semibold">單板厚度 (T)</th>
+                            <th class="p-3 font-semibold">鳥身建議層數</th>
+                            <th class="p-3 font-semibold">鳥身疊合總厚</th>
+                            <th class="p-3 font-semibold">單翼建議層數</th>
+                            <th class="p-3 font-semibold">翼根斜磨寬度</th>
+                            <th class="p-3 font-semibold">建議 Kerf 補償</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 font-medium">2.0 mm 椴木板</td>
+                            <td class="p-3">7 層 (外2+芯5)</td>
+                            <td class="p-3 font-bold text-indigo-700">14.0 mm</td>
+                            <td class="p-3">2 層 (4.0 mm)</td>
+                            <td class="p-3">3.8 mm</td>
+                            <td class="p-3">0.10 ~ 0.12 mm</td>
+                        </tr>
+                        <tr class="bg-amber-50/70 font-medium">
+                            <td class="p-3 font-bold text-amber-900">⭐ 3.0 mm 椴木板 (最推薦)</td>
+                            <td class="p-3">5 層 (外2+芯3)</td>
+                            <td class="p-3 font-bold text-indigo-700">15.0 mm</td>
+                            <td class="p-3">2 層 (6.0 mm)</td>
+                            <td class="p-3">5.7 mm</td>
+                            <td class="p-3 font-bold text-emerald-700">0.15 mm (實繪2.85mm)</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 font-medium">5.0 mm 椴木合板</td>
+                            <td class="p-3">3 層 (外2+芯1)</td>
+                            <td class="p-3 font-bold text-indigo-700">15.0 mm</td>
+                            <td class="p-3">1 層 (5.0 mm)</td>
+                            <td class="p-3">4.8 mm</td>
+                            <td class="p-3">0.15 ~ 0.20 mm</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 font-medium">15.0 mm 實木邊料</td>
+                            <td class="p-3">1 層 (免疊合)</td>
+                            <td class="p-3 font-bold text-indigo-700">15.0 mm</td>
+                            <td class="p-3">1 層 (削薄至6mm)</td>
+                            <td class="p-3">5.7 mm</td>
+                            <td class="p-3">0.00 mm (手工線鋸)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 五、五階段實體加工與組裝標準流程 -->
+        <section class="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-slate-200 space-y-5 print-card">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+                <span class="bg-indigo-600 text-white w-7 h-7 rounded-lg flex items-center justify-center text-sm">五</span>
+                五階段實體加工與組裝標準流程
+            </h2>
+
+            <div class="space-y-4">
+                <div class="border-l-4 border-indigo-600 pl-4 py-1 space-y-1.5">
+                    <h3 class="font-bold text-base text-slate-900">階段 1：雷射切割或木工線鋸下料</h3>
+                    <ul class="list-disc list-inside text-sm text-slate-700 space-y-1 leading-relaxed">
+                        <li><strong>雷射切割下料（3mm 椴木板為例）</strong>：切下「鳥身外層 × 2 片」、「鳥身夾心層（中央附穿線直槽）× 3 片」、「左翼 × 2 片」、「右翼 × 2 片」、「頂部平衡橫桿 × 1 片」及「3D 十字拉球 A/B 片各 1 片」。</li>
+                        <li><strong>實木邊料手工鋸切</strong>：將 1:1 紙模噴膠貼於 15mm 實木塊與 6mm 薄木板上，先用中心衝在所有綠圈孔位打點並以 Ø2.0 mm 鑽頭垂直鑽孔，再沿紅線鋸下外框。</li>
+                    </ul>
+                </div>
+
+                <div class="border-l-4 border-purple-600 pl-4 py-1 space-y-1.5">
+                    <h3 class="font-bold text-base text-slate-900">階段 2：竹籤定位多層疊合膠合</h3>
+                    <ul class="list-disc list-inside text-sm text-slate-700 space-y-1 leading-relaxed">
+                        <li><strong>插入 Ø3mm 竹籤對齊</strong>：取兩段約 15 mm 長的標準烤肉竹籤，插入鳥身夾心層與外層的紫色定位孔中，塗上木工白膠（太棒膠）後將 5 層鳥身緊密夾合。中央夾心層的直槽會自動在鳥身內部形成一條垂直貫穿的拉繩通道，完全免鑽長孔！</li>
+                        <li><strong>雙翼疊合</strong>：同樣利用竹籤定位孔將左右翅膀各 2 片 3mm 椴木板膠合為 6mm 厚，待白膠乾燥後將突出表面的竹籤剪平打磨。</li>
+                    </ul>
+                </div>
+
+                <div class="border-l-4 border-amber-500 pl-4 py-1 space-y-1.5 bg-amber-50/50 rounded-r-xl p-3">
+                    <h3 class="font-bold text-base text-amber-900">階段 3：關鍵工序 — 翼根內緣 42° 防干涉斜磨</h3>
+                    <ul class="list-disc list-inside text-sm text-slate-700 space-y-1 leading-relaxed">
+                        <li><strong>為什麼要斜磨翼根？</strong> 若翅膀根部維持 90° 直角端面，翅膀往下拍動時內側下緣會直接頂死鳥身側壁，導致無法下拍。</li>
+                        <li><strong>斜磨操作方式</strong>：翻到左右翅膀的「腹面（下表面）」，找到翼根內側的藍色虛線（預設 6mm 翼厚對應斜磨寬度為 5.7 mm），用砂帶機、木工銼刀或 #120 砂紙將翼根下緣磨出約 40°~45° 的內斜角，並將全機身邊緣以 #240 → #400 砂紙導圓。</li>
+                    </ul>
+                </div>
+
+                <div class="border-l-4 border-sky-500 pl-4 py-1 space-y-1.5">
+                    <h3 class="font-bold text-base text-slate-900">階段 4：分色壓克力彩繪與護木塗裝</h3>
+                    <ul class="list-disc list-inside text-sm text-slate-700 space-y-1 leading-relaxed">
+                        <li><strong>遮蔽分色</strong>：保留木材天然溫潤木紋，僅依模板藍色虛線在鳥喙、黑色頭冠、臉頰紅點與翼尖貼上紙膠帶，塗上壓克力顏料。</li>
+                        <li><strong>木蠟油保養</strong>：顏料乾燥後撕除膠帶，於原木表面塗抹一層透明木蠟油或蜂蠟，提升木紋層次感。</li>
+                    </ul>
+                </div>
+
+                <div class="border-l-4 border-emerald-600 pl-4 py-1 space-y-1.5">
+                    <h3 class="font-bold text-base text-slate-900">階段 5：關節連接與三點懸吊調校</h3>
+                    <ul class="list-disc list-inside text-sm text-slate-700 space-y-1 leading-relaxed">
+                        <li><strong>連接背脊鉸鏈（二選一）</strong>：【五金法】在鳥身背脊兩側與翼根內側各鎖入 2 顆微型羊眼釘互相勾合；【免五金穿線法】直接用耐磨尼龍線穿過「鳥身背脊綠孔 ↔ 翅膀根部綠孔」打死結，預留約 1.5 mm 活動間隙並點少許快乾膠固定線結。</li>
+                        <li><strong>綁定外側懸吊雙線</strong>：取兩條等長（約 45~50 cm）的釣魚線或玉線，下端分別穿過左右翅膀背面的「外側偏置懸吊孔（距離翼根 8mm 處）」打結固定；上端分別穿過頂部平衡橫桿的左右孔位打結。</li>
+                        <li><strong>安裝中央驅動拉繩與 3D 十字拉球</strong>：將兩片 3D 拉球圓木片沿紫色卡槽十字對插卡緊；取一條約 35 cm 拉線，上端穿過鳥身中央垂直導槽固定於鳥背，下端穿過鳥腹重心孔後綁在 3D 十字拉球上。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 六、常見問題與動態平衡故障排除 -->
+        <section class="bg-white rounded-2xl shadow-sm p-6 md:p-8 border border-slate-200 space-y-4 print-card">
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+                <span class="bg-indigo-600 text-white w-7 h-7 rounded-lg flex items-center justify-center text-sm">六</span>
+                常見問題與動態平衡故障排除 (Troubleshooting)
+            </h2>
+            <div class="overflow-x-auto rounded-xl border border-slate-200">
+                <table class="w-full text-left border-collapse text-xs md:text-sm">
+                    <thead>
+                        <tr class="bg-slate-800 text-white">
+                            <th class="p-3 font-semibold">異常現象</th>
+                            <th class="p-3 font-semibold">可能原因分析</th>
+                            <th class="p-3 font-semibold">快速調校與解決對策</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 font-bold text-rose-700">翅膀往下拍動角度很小、會卡住</td>
+                            <td class="p-3">翼根內側下緣未斜磨，或關節綁線太緊</td>
+                            <td class="p-3 leading-relaxed">1. 檢查翅膀根部下緣是否已沿藍虛線磨出 40°~45° 斜角。<br>2. 若用穿線當關節，請保留 1.5mm 鬆度。</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 font-bold text-amber-700">懸吊時鳥頭朝下或鳥尾下垂</td>
+                            <td class="p-3">前後重心與雙翼懸吊點未對齊</td>
+                            <td class="p-3 leading-relaxed">1. 若鳥頭朝下，可在尾羽內側黏貼一小塊銅片/磁鐵配重。<br>2. 或將外側懸吊線改用 Y 字分叉線同時拉住翼根前後兩孔。</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 font-bold text-indigo-700">拉動拉球放開後，回彈拍動次數少</td>
+                            <td class="p-3">鳥身總重太輕，或懸吊偏置距過大</td>
+                            <td class="p-3 leading-relaxed">1. 確認鳥身已疊合達 14~16mm 厚（若太輕可在夾心層塞入小螺母配重）。<br>2. 懸吊偏置距建議設在 7~9 mm 力矩最省力。</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 font-bold text-purple-700">3D 十字拉球或竹籤太緊/太鬆</td>
+                            <td class="p-3">不同雷切機光斑燒蝕量 (Kerf) 差異</td>
+                            <td class="p-3 leading-relaxed">1. 若太鬆：將產生器的 Kerf 補償由 0.15 調大為 0.20 mm。<br>2. 若太緊插不進去：將 Kerf 調小為 0.08~0.10 mm。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

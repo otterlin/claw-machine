@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飛翔木鳥 (Flying Wooden Bird) 1:1 模板與雷切產生器 v4 (支援自訂椴木板長寬厚尺寸)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; margin: 0; padding: 0; box-shadow: none; }
+        }
+        .cut-line { stroke: #ef4444; stroke-width: 0.4; fill: none; }
+        .score-line { stroke: #3b82f6; stroke-width: 0.35; stroke-dasharray: 2, 1.5; fill: none; }
+        .hole-line { stroke: #10b981; stroke-width: 0.4; fill: none; }
+        .dowel-line { stroke: #9333ea; stroke-width: 0.45; fill: none; }
+        .guide-text { font-family: sans-serif; font-size: 3.1px; fill: #334155; }
+    </style>
+    <style id="dynamic-print-style">
+        @page { size: 210mm 297mm; margin: 0; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+    <div class="max-w-7xl mx-auto p-4 md:p-6">
+        <header class="bg-white rounded-2xl shadow-sm p-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border border-slate-200">
+            <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h1 class="text-2xl font-bold text-slate-900">懸吊振翅木鳥 1:1 模板與雷切產生器</h1>
+                    <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full">v4.0 自訂椴木板長寬厚專版</span>
+                </div>
+                <p class="text-sm text-slate-600 mt-1">自由輸入椴木板「寬度 × 長度 × 厚度 (mm)」，自動計算最佳滿版排料與雷切緊配公差</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <a href="manual.html" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2 text-sm">
+                    📖 線上製作說明書
+                </a>
+                <a href="懸吊振翅木鳥_1比1模板產生器與製作使用說明書.docx" download class="bg-slate-700 hover:bg-slate-800 text-white font-medium px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2 text-sm">
+                    📥 下載說明書 (.docx)
+                </a>
+                <button onclick="downloadSVG()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2 text-sm">
+                    下載 1:1 SVG 雷切檔
+                </button>
+                <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2 text-sm">
+                    直接列印 1:1 紙模
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- 控制面板 -->
+            <div class="lg:col-span-4 space-y-5">
+                <!-- 1. 自訂椴木板尺寸 (寬 × 長 × 厚) 與雷切公差 -->
+                <div class="bg-white rounded-2xl shadow-sm p-5 border-2 border-indigo-500 space-y-4">
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <h2 class="font-bold text-lg text-slate-800">1. 自訂椴木板尺寸 (mm)</h2>
+                        <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-semibold">自由輸入長寬厚</span>
+                    </div>
+
+                    <!-- 常用板材尺寸快捷鍵 -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1.5">快速套用常用板材規格 (點擊後可在下方手動改數值)：</label>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button type="button" onclick="setBoardSize(210, 297, 3.0)" class="text-xs bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 px-2 py-1 rounded border border-slate-300 font-medium transition">A4 標準 (210×297×3mm)</button>
+                            <button type="button" onclick="setBoardSize(200, 300, 3.0)" class="text-xs bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 px-2 py-1 rounded border border-slate-300 font-medium transition">雷切板 (200×300×3mm)</button>
+                            <button type="button" onclick="setBoardSize(300, 300, 3.0)" class="text-xs bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 px-2 py-1 rounded border border-slate-300 font-medium transition">方板 (300×300×3mm)</button>
+                            <button type="button" onclick="setBoardSize(450, 300, 3.0)" class="text-xs bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-800 px-2 py-1 rounded border border-slate-300 font-medium transition">大板 (450×300×3mm)</button>
+                            <button type="button" onclick="setBoardSize(150, 250, 15.0)" class="text-xs bg-amber-50 hover:bg-amber-100 text-amber-800 px-2 py-1 rounded border border-amber-300 font-medium transition">實木邊料 (150×250×15mm)</button>
+                        </div>
+                    </div>
+
+                    <!-- 手動輸入：板寬、板長、板厚 -->
+                    <div class="grid grid-cols-3 gap-2.5 bg-indigo-50/60 p-3 rounded-xl border border-indigo-200">
+                        <div>
+                            <label class="block text-[11px] font-bold text-indigo-900 mb-1">板材寬度 W (mm)</label>
+                            <input type="number" id="boardWidth" min="100" max="1200" step="1" value="210" oninput="updateTemplate()" class="w-full rounded-lg border-indigo-300 border p-1.5 text-sm font-bold text-center text-indigo-950 bg-white shadow-inner">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-indigo-900 mb-1">板材長度 H (mm)</label>
+                            <input type="number" id="boardHeight" min="100" max="1200" step="1" value="297" oninput="updateTemplate()" class="w-full rounded-lg border-indigo-300 border p-1.5 text-sm font-bold text-center text-indigo-950 bg-white shadow-inner">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-indigo-900 mb-1">單板厚度 T (mm)</label>
+                            <input type="number" id="boardThick" min="0.5" max="50" step="0.1" value="3.0" oninput="onThickChange()" class="w-full rounded-lg border-indigo-300 border p-1.5 text-sm font-bold text-center text-indigo-950 bg-white shadow-inner">
+                        </div>
+                    </div>
+
+                    <!-- 定位銷孔徑：也支援自訂數值 -->
+                    <div class="grid grid-cols-2 gap-3 items-end">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">疊合定位銷孔徑 (mm，0=不開孔)</label>
+                            <input type="number" id="dowelDia" min="0" max="12" step="0.1" value="3.0" oninput="updateTemplate()" class="w-full rounded-lg border-slate-300 border p-1.5 text-sm font-bold text-slate-800 bg-slate-50">
+                        </div>
+                        <div class="flex gap-1 pb-0.5">
+                            <button type="button" onclick="setDowel(0)" class="text-[11px] bg-slate-200 hover:bg-slate-300 px-2 py-1.5 rounded font-medium">無(0)</button>
+                            <button type="button" onclick="setDowel(2.0)" class="text-[11px] bg-slate-200 hover:bg-slate-300 px-2 py-1.5 rounded font-medium">竹籤2.0</button>
+                            <button type="button" onclick="setDowel(3.0)" class="text-[11px] bg-purple-100 text-purple-800 hover:bg-purple-200 px-2 py-1.5 rounded font-bold">竹籤3.0</button>
+                        </div>
+                    </div>
+
+                    <!-- 雷射切割光斑公差補償 (Kerf Offset) -->
+                    <div class="bg-emerald-50/70 rounded-xl p-3 border border-emerald-200 space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-emerald-900">雷切公差縮減補償 (Kerf Offset)</span>
+                            <div class="flex items-center gap-1">
+                                <input type="number" id="kerfOffset" min="0.00" max="1.00" step="0.01" value="0.15" oninput="updateTemplate()" class="w-16 text-center border border-emerald-400 rounded py-0.5 font-bold text-emerald-900 bg-white text-xs">
+                                <span class="text-emerald-800 font-bold">mm</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-[11px] text-emerald-800 pt-0.5">
+                            <button type="button" onclick="setKerf(0)" class="underline hover:text-emerald-600">0.00 (手鋸)</button>
+                            <button type="button" onclick="setKerf(0.10)" class="underline hover:text-emerald-600">0.10 (微緊配)</button>
+                            <button type="button" onclick="setKerf(0.15)" class="underline hover:text-emerald-600 font-bold">0.15 (CO2標準)</button>
+                            <button type="button" onclick="setKerf(0.20)" class="underline hover:text-emerald-600">0.20 (強力免膠)</button>
+                        </div>
+                    </div>
+
+                    <!-- 自動計算疊合層數與總厚建議 -->
+                    <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-2.5 text-xs">
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-slate-700">鳥身疊合層數 (建議總厚 12~16mm)：</span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="number" id="bodyLayers" min="1" max="20" value="5" oninput="updateTemplate()" class="w-14 text-center border rounded py-0.5 font-bold text-indigo-700 bg-white">
+                                <span>層</span>
+                                <span id="calc_bodyThick" class="bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded font-bold">= 15.0 mm</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-slate-700">單翼疊合層數 (建議總厚 3~6mm)：</span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="number" id="wingLayers" min="1" max="10" value="2" oninput="updateTemplate()" class="w-14 text-center border rounded py-0.5 font-bold text-indigo-700 bg-white">
+                                <span>層</span>
+                                <span id="calc_wingThick" class="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">= 6.0 mm</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-1 border-t border-slate-200 text-slate-600 leading-relaxed" id="bevelHint">
+                            <!-- 動態計算斜磨寬度與板面空間提示 -->
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <label class="text-xs font-semibold text-slate-700">依輸入板材尺寸自動滿版排入多層零件</label>
+                        <input type="checkbox" id="autoNestBody" checked onchange="updateTemplate()" class="w-4 h-4 accent-indigo-600 rounded">
+                    </div>
+                </div>
+
+                <!-- 2. 鳥種與幾何尺寸 (支援滑桿與直接輸入數值) -->
+                <div class="bg-white rounded-2xl shadow-sm p-5 border border-slate-200 space-y-4">
+                    <h2 class="font-bold text-lg text-slate-800 border-b pb-2">2. 鳥種款式與零件尺寸</h2>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">選擇預設鳥種造型</label>
+                        <select id="presetSelect" onchange="applyPreset()" class="w-full rounded-lg border-slate-300 border p-2 text-sm bg-slate-50 font-medium">
+                            <option value="tit">山雀 / 麻雀款 (圓潤可愛、短尾)</option>
+                            <option value="robin">知更鳥 / 鸚鵡款 (標準流線、經典)</option>
+                            <option value="eagle">老鷹 / 海鷗款 (修長滑翔翼、展翅感)</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-3 pt-1">
+                        <div>
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span>鳥身總長 (Body Length)</span>
+                                <span id="val_bodyLen" class="text-indigo-600 font-bold">145 mm</span>
+                            </div>
+                            <input type="range" id="bodyLen" min="90" max="240" value="145" oninput="updateTemplate()" class="w-full accent-indigo-600">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span>鳥身高度 (Body Height)</span>
+                                <span id="val_bodyHeight" class="text-indigo-600 font-bold">35 mm</span>
+                            </div>
+                            <input type="range" id="bodyHeight" min="22" max="60" value="35" oninput="updateTemplate()" class="w-full accent-indigo-600">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span>單側翅膀展長 (Wing Span)</span>
+                                <span id="val_wingSpan" class="text-indigo-600 font-bold">110 mm</span>
+                            </div>
+                            <input type="range" id="wingSpan" min="70" max="200" value="110" oninput="updateTemplate()" class="w-full accent-indigo-600">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs font-medium mb-1">
+                                <span>翅膀前後弦寬 (Wing Chord)</span>
+                                <span id="val_wingChord" class="text-indigo-600 font-bold">66 mm</span>
+                            </div>
+                            <input type="range" id="wingChord" min="40" max="110" value="66" oninput="updateTemplate()" class="w-full accent-indigo-600">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <div class="flex justify-between text-xs font-medium mb-1">
+                                    <span>穿線孔徑</span>
+                                    <span id="val_holeDia" class="text-indigo-600 font-bold">2.0 mm</span>
+                                </div>
+                                <input type="range" id="holeDia" min="1.2" max="4.5" step="0.2" value="2.0" oninput="updateTemplate()" class="w-full accent-indigo-600">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-medium mb-1">
+                                    <span>懸吊偏置距</span>
+                                    <span id="val_hingeOffset" class="text-indigo-600 font-bold">8 mm</span>
+                                </div>
+                                <input type="range" id="hingeOffset" min="5" max="18" step="1" value="8" oninput="updateTemplate()" class="w-full accent-indigo-600">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t flex items-center justify-between">
+                        <label class="text-xs font-semibold text-slate-700">顯示彩繪預覽色塊 (僅供對位參考)</label>
+                        <input type="checkbox" id="showColor" checked onchange="updateTemplate()" class="w-4 h-4 accent-indigo-600 rounded">
+                    </div>
+                </div>
+
+                <!-- 動作模擬器 -->
+                <div class="bg-white rounded-2xl shadow-sm p-5 border border-slate-200 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <h2 class="font-bold text-base text-slate-800">3. 懸吊振翅物理機構模擬</h2>
+                        <span id="sim_thickBadge" class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">鳥身厚 15mm</span>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl p-3 flex justify-center items-center">
+                        <svg id="simSvg" viewBox="-140 -90 280 180" class="w-full h-40"></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 自訂板材尺寸 1:1 預覽畫布 -->
+            <div class="lg:col-span-8 flex flex-col items-center">
+                <div class="w-full flex justify-between items-center mb-2 px-1">
+                    <span id="canvasDimensionLabel" class="text-xs font-bold text-slate-600 bg-white px-3 py-1 rounded-full shadow-sm border border-slate-200">
+                        目前畫布尺寸：210 × 297 mm (單板厚度 3.0 mm)
+                    </span>
+                    <span id="fitWarningBadge" class="hidden text-xs font-bold text-rose-700 bg-rose-100 px-3 py-1 rounded-full border border-rose-300">
+                        ⚠️ 板材長寬小於零件展開尺寸，請加大板材或縮小鳥身/翼展！
+                    </span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-2xl p-4 md:p-6 flex justify-center overflow-auto border border-slate-300 shadow-inner">
+                    <div id="print-area" class="bg-white shadow-lg transition-all duration-150" style="width: 210mm; height: 297mm;">
+                        <svg id="templateSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="210mm" height="297mm"></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const presets = {
+            tit: { bodyLen: 145, bodyHeight: 35, wingSpan: 110, wingChord: 66, holeDia: 2.0, hingeOffset: 8 },
+            robin: { bodyLen: 158, bodyHeight: 33, wingSpan: 120, wingChord: 64, holeDia: 2.0, hingeOffset: 8 },
+            eagle: { bodyLen: 175, bodyHeight: 32, wingSpan: 145, wingChord: 60, holeDia: 2.2, hingeOffset: 10 }
+        };
+
+        let currentStyle = 'tit';
+        let globalSimBodyThick = 15;
+        let globalSimWingThick = 6;
+
+        function setBoardSize(w, h, t) {
+            document.getElementById('boardWidth').value = w;
+            document.getElementById('boardHeight').value = h;
+            document.getElementById('boardThick').value = t;
+            onThickChange();
+        }
+
+        function setDowel(val) {
+            document.getElementById('dowelDia').value = val;
+            updateTemplate();
+        }
+
+        function setKerf(val) {
+            document.getElementById('kerfOffset').value = val;
+            updateTemplate();
+        }
+
+        function onThickChange() {
+            const t = parseFloat(document.getElementById('boardThick').value) || 3.0;
+            const recBodyLayers = Math.max(1, Math.round(15 / t));
+            const recWingLayers = t <= 3.2 ? 2 : 1;
+            document.getElementById('bodyLayers').value = recBodyLayers;
+            document.getElementById('wingLayers').value = recWingLayers;
+            updateTemplate();
+        }
+
+        function applyPreset() {
+            currentStyle = document.getElementById('presetSelect').value;
+            const p = presets[currentStyle];
+            document.getElementById('bodyLen').value = p.bodyLen;
+            document.getElementById('bodyHeight').value = p.bodyHeight;
+            document.getElementById('wingSpan').value = p.wingSpan;
+            document.getElementById('wingChord').value = p.wingChord;
+            document.getElementById('holeDia').value = p.holeDia;
+            document.getElementById('hingeOffset').value = p.hingeOffset;
+            updateTemplate();
+        }
+
+        function updateTemplate() {
+            const boardW = Math.max(80, parseFloat(document.getElementById('boardWidth').value) || 210);
+            const boardH = Math.max(80, parseFloat(document.getElementById('boardHeight').value) || 297);
+            const boardThick = Math.max(0.5, parseFloat(document.getElementById('boardThick').value) || 3.0);
+            const bodyLayers = Math.max(1, parseInt(document.getElementById('bodyLayers').value) || 1);
+            const wingLayers = Math.max(1, parseInt(document.getElementById('wingLayers').value) || 1);
+            const dowelDia = Math.max(0, parseFloat(document.getElementById('dowelDia').value) || 0);
+            const kerfOffset = Math.max(0, parseFloat(document.getElementById('kerfOffset').value) || 0);
+            const autoNestBody = document.getElementById('autoNestBody').checked;
+
+            // 同步更新畫布與 SVG 的實體 mm 尺寸與列印 @page 尺寸
+            const printArea = document.getElementById('print-area');
+            const svg = document.getElementById('templateSvg');
+            printArea.style.width = boardW + 'mm';
+            printArea.style.height = boardH + 'mm';
+            svg.setAttribute('viewBox', `0 0 ${boardW} ${boardH}`);
+            svg.setAttribute('width', boardW + 'mm');
+            svg.setAttribute('height', boardH + 'mm');
+            document.getElementById('dynamic-print-style').innerHTML = `@page { size: ${boardW}mm ${boardH}mm; margin: 0; }`;
+
+            const totalBodyThick = boardThick * bodyLayers;
+            const totalWingThick = boardThick * wingLayers;
+            globalSimBodyThick = totalBodyThick;
+            globalSimWingThick = totalWingThick;
+
+            document.getElementById('canvasDimensionLabel').innerText = `目前板材畫布尺寸：${boardW} × ${boardH} mm (單板厚度 ${boardThick.toFixed(1)} mm)`;
+
+            const actualSlotWidth = Math.max(0.5, boardThick - kerfOffset);
+            const actualDowelDia = dowelDia > 0 ? Math.max(0.5, dowelDia - kerfOffset) : 0;
+            const bevelWidth = Math.max(3.5, Math.round(totalWingThick * 0.95 * 10) / 10);
+
+            document.getElementById('calc_bodyThick').innerText = `= ${totalBodyThick.toFixed(1)} mm`;
+            document.getElementById('calc_wingThick').innerText = `= ${totalWingThick.toFixed(1)} mm`;
+            document.getElementById('sim_thickBadge').innerText = `鳥身總厚 ${totalBodyThick.toFixed(1)}mm / 翼厚 ${totalWingThick.toFixed(1)}mm`;
+
+            const bodyLen = parseFloat(document.getElementById('bodyLen').value);
+            const bodyHeight = parseFloat(document.getElementById('bodyHeight').value);
+            const wingSpan = parseFloat(document.getElementById('wingSpan').value);
+            const wingChord = parseFloat(document.getElementById('wingChord').value);
+            const holeDia = parseFloat(document.getElementById('holeDia').value);
+            const hingeOffset = parseFloat(document.getElementById('hingeOffset').value);
+            const showColor = document.getElementById('showColor').checked;
+
+            document.getElementById('val_bodyLen').innerText = bodyLen + ' mm';
+            document.getElementById('val_bodyHeight').innerText = bodyHeight + ' mm';
+            document.getElementById('val_wingSpan').innerText = wingSpan + ' mm';
+            document.getElementById('val_wingChord').innerText = wingChord + ' mm';
+            document.getElementById('val_holeDia').innerText = holeDia.toFixed(1) + ' mm';
+            document.getElementById('val_hingeOffset').innerText = hingeOffset + ' mm';
+
+            const r = holeDia / 2;
+            const dr = actualDowelDia / 2;
+
+            function buildBodyGroup(bx, by, layerLabel, isCoreLayer) {
+                const h = bodyHeight;
+                const L = bodyLen;
+                const bodyPath = `
+                    M ${bx} ${by + h * 0.52}
+                    C ${bx + L * 0.06} ${by + h * 0.25}, ${bx + L * 0.14} ${by}, ${bx + L * 0.26} ${by}
+                    L ${bx + L * 0.72} ${by + h * 0.04}
+                    L ${bx + L} ${by - h * 0.12}
+                    L ${bx + L * 0.94} ${by + h * 0.42}
+                    C ${bx + L * 0.76} ${by + h * 0.58}, ${bx + L * 0.62} ${by + h}, ${bx + L * 0.36} ${by + h}
+                    C ${bx + L * 0.18} ${by + h}, ${bx + L * 0.08} ${by + h * 0.78}, ${bx} ${by + h * 0.52}
+                    Z
+                `;
+                const beakLine = `M ${bx + L * 0.08} ${by + h * 0.31} Q ${bx + L * 0.10} ${by + h * 0.52} ${bx + L * 0.07} ${by + h * 0.69}`;
+                const headLine = `M ${bx + L * 0.26} ${by} C ${bx + L * 0.24} ${by + h * 0.45}, ${bx + L * 0.18} ${by + h * 0.72}, ${bx + L * 0.12} ${by + h * 0.82}`;
+                const tailLine = `M ${bx + L * 0.74} ${by + h * 0.04} L ${bx + L * 0.78} ${by + h * 0.54}`;
+                const eyeX = bx + L * 0.135, eyeY = by + h * 0.38;
+                const cheekX = bx + L * 0.165, cheekY = by + h * 0.62;
+                const bodyHoleY = by + 4.5;
+                const cgX = bx + L * 0.33 + wingChord * 0.48;
+
+                let dowelHoles = '';
+                if (dowelDia > 0 && bodyLayers > 1) {
+                    const d1x = bx + L * 0.28, d1y = by + h * 0.55;
+                    const d2x = bx + L * 0.68, d2y = by + h * 0.42;
+                    dowelHoles = `
+                        <circle cx="${d1x}" cy="${d1y}" r="${dr}" class="dowel-line"/>
+                        <circle cx="${d2x}" cy="${d2y}" r="${dr}" class="dowel-line"/>
+                    `;
+                }
+
+                let coreChannel = '';
+                if (isCoreLayer && bodyLayers >= 3) {
+                    const slotW = holeDia + 0.6;
+                    coreChannel = `
+                        <rect x="${cgX - slotW/2}" y="${by + 1.8}" width="${slotW}" height="${h - 3.6}" rx="${slotW/2}" class="cut-line"/>
+                    `;
+                }
+
+                let colorOverlay = '';
+                if (showColor && !isCoreLayer) {
+                    colorOverlay = `
+                        <path d="${bodyPath}" fill="#d97706" fill-opacity="0.14" stroke="none"/>
+                        <circle cx="${eyeX}" cy="${eyeY}" r="3.4" fill="#ffffff" stroke="#1e293b" stroke-width="0.3"/>
+                        <circle cx="${eyeX}" cy="${eyeY}" r="1.8" fill="#0f172a"/>
+                        <circle cx="${cheekX}" cy="${cheekY}" r="3.2" fill="#ef4444" fill-opacity="0.85"/>
+                    `;
+                }
+
+                return `
+                    <g>
+                        ${colorOverlay}
+                        <path d="${bodyPath}" class="cut-line"/>
+                        ${!isCoreLayer ? `
+                            <path d="${beakLine}" class="score-line"/>
+                            <path d="${headLine}" class="score-line"/>
+                            <path d="${tailLine}" class="score-line"/>
+                            <circle cx="${eyeX}" cy="${eyeY}" r="3.4" class="score-line"/>
+                            <circle cx="${cheekX}" cy="${cheekY}" r="3.2" class="score-line"/>
+                        ` : ''}
+                        <circle cx="${bx + L * 0.33 + wingChord * 0.18}" cy="${bodyHoleY}" r="${r}" class="hole-line"/>
+                        <circle cx="${bx + L * 0.33 + wingChord * 0.80}" cy="${bodyHoleY}" r="${r}" class="hole-line"/>
+                        <line x1="${cgX}" y1="${by}" x2="${cgX}" y2="${by + h}" class="score-line"/>
+                        <circle cx="${cgX}" cy="${by + h - 3.5}" r="${r}" class="hole-line"/>
+                        ${dowelHoles}
+                        ${coreChannel}
+                        <text x="${bx + L * 0.28}" y="${by + h * 0.52}" class="guide-text" font-weight="bold">${layerLabel}</text>
+                        <text x="${bx + L * 0.28}" y="${by + h * 0.52 + 4.2}" class="guide-text">板厚 ${boardThick}mm × 共需 ${bodyLayers} 層 (總厚 ${totalBodyThick.toFixed(1)}mm)</text>
+                    </g>
+                `;
+            }
+
+            function buildWing(wx, wy, label) {
+                const C = wingChord, S = wingSpan;
+                const wPath = `
+                    M ${wx} ${wy}
+                    L ${wx + C} ${wy}
+                    C ${wx + C * 1.04} ${wy + S * 0.48}, ${wx + C * 0.62} ${wy + S * 0.92}, ${wx + C * 0.12} ${wy + S}
+                    C ${wx + C * 0.02} ${wy + S * 0.98}, ${wx} ${wy + S * 0.65}, ${wx} ${wy}
+                    Z
+                `;
+                const tipLine = `M ${wx + 1.2} ${wy + S * 0.78} Q ${wx + C * 0.22} ${wy + S * 0.81} ${wx + C * 0.42} ${wy + S * 0.86}`;
+                const bevelLine = `M ${wx} ${wy + bevelWidth} L ${wx + C} ${wy + bevelWidth}`;
+                const h1x = wx + C * 0.18, h2x = wx + C * 0.80, hy = wy + 4.0;
+                const liftX = wx + C * 0.48, liftY = wy + 4.0 + hingeOffset;
+
+                let wingDowels = '';
+                if (dowelDia > 0 && wingLayers > 1) {
+                    wingDowels = `
+                        <circle cx="${wx + C * 0.25}" cy="${wy + S * 0.35}" r="${dr}" class="dowel-line"/>
+                        <circle cx="${wx + C * 0.65}" cy="${wy + S * 0.35}" r="${dr}" class="dowel-line"/>
+                    `;
+                }
+
+                let colorOverlay = '';
+                if (showColor) {
+                    colorOverlay = `
+                        <path d="${wPath}" fill="#eab308" fill-opacity="0.12" stroke="none"/>
+                        <path d="M ${wx + 1.2} ${wy + S * 0.78} Q ${wx + C * 0.22} ${wy + S * 0.81} ${wx + C * 0.42} ${wy + S * 0.86} C ${wx + C * 0.28} ${wy + S * 0.95}, ${wx + C * 0.15} ${wy + S}, ${wx + C * 0.12} ${wy + S} C ${wx + C * 0.04} ${wy + S * 0.98}, ${wx + 0.5} ${wy + S * 0.88}, ${wx + 1.2} ${wy + S * 0.78} Z" fill="#1e293b" fill-opacity="0.75" stroke="none"/>
+                    `;
+                }
+
+                return `
+                    <g>
+                        ${colorOverlay}
+                        <path d="${wPath}" class="cut-line"/>
+                        <path d="${tipLine}" class="score-line"/>
+                        <path d="${bevelLine}" class="score-line"/>
+                        <circle cx="${h1x}" cy="${hy}" r="${r}" class="hole-line"/>
+                        <circle cx="${h2x}" cy="${hy}" r="${r}" class="hole-line"/>
+                        <circle cx="${liftX}" cy="${liftY}" r="${r}" class="hole-line"/>
+                        ${wingDowels}
+                        <text x="${wx + 3}" y="${wy + bevelWidth + 3.2}" class="guide-text" fill="#1d4ed8">▲ 內緣斜磨寬 ${bevelWidth}mm</text>
+                        <text x="${wx + C * 0.12}" y="${wy + S * 0.50}" class="guide-text" font-weight="bold">${label} (切 ${wingLayers} 片)</text>
+                        <text x="${wx + C * 0.12}" y="${wy + S * 0.50 + 4.2}" class="guide-text">展長 ${S}×寬 ${C}mm</text>
+                    </g>
+                `;
+            }
+
+            // 智慧動態排版引擎：根據使用者輸入的 boardW 與 boardH 自動計算可排入的鳥身數量與翅膀位置
+            let bodiesSvg = '';
+            let currentY = 30;
+            const marginX = 16;
+            const bottomReserve = 36; // 預留給頂部橫桿與 3D 拉球的高度
+            const availHForBodiesAndWings = boardH - currentY - bottomReserve;
+
+            // 計算在放得下一對翅膀 (高度 wingSpan + 10) 的前提下，垂直方向最多能排幾隻鳥身
+            let maxVerticalBodies = 1;
+            if (autoNestBody && bodyLayers > 1) {
+                const spaceForBodies = availHForBodiesAndWings - (wingSpan + 10);
+                maxVerticalBodies = Math.max(1, Math.min(bodyLayers, Math.floor(spaceForBodies / (bodyHeight + 7))));
+            }
+
+            // 如果板材很寬 (例如 >= 340mm)，甚至可以左右並排 2 列鳥身！
+            const bodyCols = (autoNestBody && boardW >= (bodyLen * 2 + 45)) ? 2 : 1;
+            let placedBodies = 0;
+            const targetBodiesToPlace = autoNestBody ? Math.min(bodyLayers, maxVerticalBodies * bodyCols) : 1;
+
+            for (let row = 0; row < maxVerticalBodies; row++) {
+                for (let col = 0; col < bodyCols; col++) {
+                    if (placedBodies >= targetBodiesToPlace) break;
+                    const bx = marginX + col * (bodyLen + 14);
+                    const by = currentY + row * (bodyHeight + 8);
+                    const isCore = (placedBodies >= 1 && bodyLayers >= 3);
+                    const label = (targetBodiesToPlace === 1)
+                        ? `鳥身主體 (Body) — 請切 ${bodyLayers} 片疊合`
+                        : (placedBodies === 0 || (placedBodies === 1 && targetBodiesToPlace >= 3))
+                            ? `鳥身外層 (Outer #${placedBodies + 1})`
+                            : `鳥身夾心層 (Core #${placedBodies + 1}，含穿線導槽)`;
+                    bodiesSvg += buildBodyGroup(bx, by, label, isCore);
+                    placedBodies++;
+                }
+            }
+
+            const usedBodyRows = Math.ceil(placedBodies / bodyCols);
+            const wingStartY = currentY + usedBodyRows * (bodyHeight + 8) + 4;
+
+            // 左右翅膀排版：若板寬足夠，並排放置；若板材較窄，自動調整間距
+            const wingGap = Math.max(8, Math.min(24, boardW - marginX * 2 - wingChord * 2));
+            const leftWingX = marginX;
+            const rightWingX = marginX + wingChord + wingGap;
+
+            let wingsSvg = buildWing(leftWingX, wingStartY, "左翼 (Left Wing)") +
+                           buildWing(rightWingX, wingStartY, "右翼 (Right Wing)");
+
+            // 如果板材夠寬 (例如 >= 330mm) 且單翼需要 2 層，自動在右側多排一對翅膀！
+            let placedWingPairs = 1;
+            if (autoNestBody && wingLayers >= 2 && (rightWingX + wingChord + wingGap + wingChord * 2 + marginX <= boardW)) {
+                const extraWX1 = rightWingX + wingChord + wingGap;
+                const extraWX2 = extraWX1 + wingChord + wingGap;
+                wingsSvg += buildWing(extraWX1, wingStartY, "左翼 第2層") +
+                            buildWing(extraWX2, wingStartY, "右翼 第2層");
+                placedWingPairs = 2;
+            }
+
+            // 檢查是否超出板材長寬邊界
+            const maxUsedW = Math.max(marginX + bodyCols * bodyLen, rightWingX + wingChord + 10);
+            const maxUsedH = wingStartY + wingSpan + bottomReserve;
+            const isOutOfBounds = (maxUsedW > boardW) || (maxUsedH > boardH);
+            const warnBadge = document.getElementById('fitWarningBadge');
+            if (isOutOfBounds) {
+                warnBadge.classList.remove('hidden');
+            } else {
+                warnBadge.classList.add('hidden');
+            }
+
+            document.getElementById('bevelHint').innerHTML = `
+                💡 <b>板材尺寸 (${boardW}×${boardH}×${boardThick}mm) 與公差 (-${kerfOffset.toFixed(2)}mm) 已套用</b>：<br>
+                ▸ <b>板面排料狀態</b>：單張板已自動排入 <b>${placedBodies} 片鳥身</b> 與 <b>${placedWingPairs} 對翅膀</b>。<br>
+                ▸ <b>十字卡榫實際槽寬</b>：<b>${actualSlotWidth.toFixed(2)} mm</b> ｜ <b>定位銷孔</b>：<b>${dowelDia > 0 ? 'Ø ' + actualDowelDia.toFixed(2) + ' mm' : '未開啟'}</b><br>
+                ▸ <b>翼根防干涉斜磨寬度</b>：<b>${bevelWidth} mm</b>（藍虛線）
+            `;
+
+            const barX = marginX, barY = boardH - 28, barLen = Math.min(110, boardW - 75), barH = 15;
+            const barHoleSpan = totalBodyThick + (hingeOffset * 2);
+            const scaleX = Math.max(marginX, boardW - 64);
+
+            svg.innerHTML = `
+                <!-- 板材外框 (距邊緣 6mm 安全框) -->
+                <rect x="6" y="6" width="${boardW - 12}" height="${boardH - 12}" fill="none" stroke="#94a3b8" stroke-width="0.3" stroke-dasharray="2,2"/>
+                <text x="12" y="13.5" font-family="sans-serif" font-size="3.8" font-weight="bold" fill="#0f172a">
+                    魔法飛翔木鳥 1:1 模板 — 板材 ${boardW}×${boardH}×${boardThick}mm / Kerf -${kerfOffset.toFixed(2)}mm (卡槽 ${actualSlotWidth.toFixed(2)}mm)
+                </text>
+                <text x="12" y="18.5" class="guide-text">
+                    紅線：切割 ｜ 藍線：彩繪/斜磨(${bevelWidth}mm) ｜ 綠圈：穿線孔(Ø${holeDia.toFixed(1)}mm) ｜ 紫線：定位銷(${dowelDia > 0 ? 'Ø' + actualDowelDia.toFixed(2) + 'mm' : '無'})與緊配卡槽
+                </text>
+
+                <!-- 50mm 比例尺 -->
+                <g transform="translate(${scaleX}, 10)">
+                    <rect x="0" y="0" width="50" height="6" fill="#f8fafc" stroke="#0f172a" stroke-width="0.4"/>
+                    <line x1="10" y1="0" x2="10" y2="3" stroke="#0f172a" stroke-width="0.3"/>
+                    <line x1="20" y1="0" x2="20" y2="3" stroke="#0f172a" stroke-width="0.3"/>
+                    <line x1="30" y1="0" x2="30" y2="3" stroke="#0f172a" stroke-width="0.3"/>
+                    <line x1="40" y1="0" x2="40" y2="3" stroke="#0f172a" stroke-width="0.3"/>
+                    <text x="8" y="4.5" font-family="sans-serif" font-size="2.9" font-weight="bold" fill="#0f172a">50 mm 1:1 比例確認尺</text>
+                </g>
+
+                <!-- 鳥身區塊 -->
+                ${bodiesSvg}
+
+                <!-- 左右翅膀區塊 -->
+                ${wingsSvg}
+
+                <!-- 頂部懸吊橫桿 -->
+                <g transform="translate(${barX}, ${barY})">
+                    <rect x="0" y="0" width="${barLen}" height="${barH}" rx="7.5" ry="7.5" class="cut-line"/>
+                    <circle cx="${barLen / 2}" cy="4" r="${r}" class="hole-line"/>
+                    <circle cx="${barLen / 2 - barHoleSpan / 2}" cy="${barH - 4}" r="${r}" class="hole-line"/>
+                    <circle cx="${barLen / 2 + barHoleSpan / 2}" cy="${barH - 4}" r="${r}" class="hole-line"/>
+                    <rect x="${barLen / 2 - actualSlotWidth / 2}" y="${barH - 5}" width="${actualSlotWidth}" height="5" class="dowel-line"/>
+                    <text x="6" y="8.5" class="guide-text" font-weight="bold">頂部橫桿 × 1 (跨距 ${barHoleSpan.toFixed(1)}mm ｜ 槽寬 ${actualSlotWidth.toFixed(2)}mm)</text>
+                </g>
+
+                <!-- 3D 十字對插立體拉繩木珠 -->
+                <g transform="translate(${barX + barLen + 8}, ${barY - 3})">
+                    <circle cx="11" cy="11" r="10.5" class="cut-line"/>
+                    <rect x="${11 - actualSlotWidth / 2}" y="0.5" width="${actualSlotWidth}" height="10.5" class="dowel-line"/>
+                    <circle cx="11" cy="16" r="${r}" class="hole-line"/>
+                    
+                    <g transform="translate(24, 0)">
+                        <circle cx="11" cy="11" r="10.5" class="cut-line"/>
+                        <rect x="${11 - actualSlotWidth / 2}" y="11" width="${actualSlotWidth}" height="10.5" class="dowel-line"/>
+                        <circle cx="11" cy="5.5" r="${r}" class="hole-line"/>
+                    </g>
+                    <text x="-2" y="25" class="guide-text" font-weight="bold" fill="#7e22ce">3D 十字拉球 (${actualSlotWidth.toFixed(2)}mm)</text>
+                </g>
+            `;
+        }
+
+        let simAngle = 0;
+        function animateSimulation() {
+            simAngle += 0.06;
+            const pull = Math.sin(simAngle);
+            const bodyY = pull * 16;
+            const wingDeg = -pull * 32;
+
+            const halfBodyW = Math.max(4, globalSimBodyThick / 2);
+            const wingT = Math.max(2, globalSimWingThick * 0.65);
+
+            const simSvg = document.getElementById('simSvg');
+            if (simSvg) {
+                simSvg.innerHTML = `
+                    <rect x="-50" y="-78" width="100" height="6" rx="3" fill="#cbd5e1"/>
+                    <line x1="${-(halfBodyW + 14)}" y1="-72" x2="${-(halfBodyW + 14)}" y2="${bodyY - 4}" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="2,2"/>
+                    <line x1="${halfBodyW + 14}" y1="-72" x2="${halfBodyW + 14}" y2="${bodyY - 4}" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="2,2"/>
+                    <line x1="0" y1="${bodyY + 12}" x2="0" y2="${58 + bodyY}" stroke="#f59e0b" stroke-width="1.8"/>
+                    <circle cx="0" cy="${63 + bodyY}" r="6.5" fill="#d97706" stroke="#fef3c7" stroke-width="1"/>
+                    <g transform="translate(${-halfBodyW}, ${bodyY}) rotate(${wingDeg})">
+                        <path d="M 0 0 L -85 -4 L -85 ${wingT - 4} L -4 ${wingT} Z" fill="#eab308" stroke="#fef08a" stroke-width="0.9"/>
+                        <circle cx="-14" cy="0" r="2.2" fill="#38bdf8"/>
+                    </g>
+                    <g transform="translate(${halfBodyW}, ${bodyY}) rotate(${-wingDeg})">
+                        <path d="M 0 0 L 85 -4 L 85 ${wingT - 4} L 4 ${wingT} Z" fill="#eab308" stroke="#fef08a" stroke-width="0.9"/>
+                        <circle cx="14" cy="0" r="2.2" fill="#38bdf8"/>
+                    </g>
+                    <rect x="${-halfBodyW}" y="${bodyY - 4}" width="${halfBodyW * 2}" height="22" rx="4" fill="#f97316" stroke="#fff" stroke-width="1"/>
+                    <circle cx="${-halfBodyW}" cy="${bodyY}" r="2" fill="#10b981"/>
+                    <circle cx="${halfBodyW}" cy="${bodyY}" r="2" fill="#10b981"/>
+                `;
+            }
+            requestAnimationFrame(animateSimulation);
+        }
+
+        function downloadSVG() {
+            const boardW = document.getElementById('boardWidth').value;
+            const boardH = document.getElementById('boardHeight').value;
+            const boardThick = document.getElementById('boardThick').value;
+            const kerfOffset = parseFloat(document.getElementById('kerfOffset').value).toFixed(2);
+            const svgEl = document.getElementById('templateSvg');
+            const serializer = new XMLSerializer();
+            let source = serializer.serializeToString(svgEl);
+            if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+                source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+            }
+            source = '<?xml version="1.0" standalone="no"?>
+' + source;
+            const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `flying_bird_${currentStyle}_${boardW}x${boardH}x${boardThick}mm_kerf${kerfOffset}.svg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        window.onload = () => {
+            onThickChange();
+            animateSimulation();
+        };
+    </script>
+</body>
+</html>
