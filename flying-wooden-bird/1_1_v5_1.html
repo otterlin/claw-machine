@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魔法木鳥 1:1 原尺寸模板與多層拼接雷切產生器 v5.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Serif TC', sans-serif;
+            background-color: #f6efe2;
+            color: #1f2421;
+        }
+        .serif-title {
+            font-family: 'Noto Serif TC', serif;
+        }
+        /* 列印專用規則：只輸出 1:1 模板畫布 */
+        @media print {
+            body * { visibility: hidden !important; }
+            #print-area, #print-area * { visibility: visible !important; }
+            #print-area {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+        }
+        /* SVG 雷切與木工標準四色圖層 */
+        .cut-line { stroke: #dc2626; stroke-width: 0.42; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+        .score-line { stroke: #2563eb; stroke-width: 0.32; stroke-dasharray: 1.8, 1.2; fill: none; }
+        .hole-line { stroke: #059669; stroke-width: 0.42; fill: none; }
+        .dowel-line { stroke: #9333ea; stroke-width: 0.45; fill: none; }
+        .guide-text { font-family: 'Inter', sans-serif; font-size: 2.9px; fill: #334155; }
+        
+        /* 卡片選取高亮特效 */
+        .species-card.active {
+            border-color: #d97706;
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            box-shadow: 0 6px 16px -3px rgba(217, 119, 6, 0.28);
+            transform: translateY(-2px);
+        }
+        /* 自訂捲軸 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #e6dec8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #8c6d46; border-radius: 4px; }
+    </style>
+    <style id="dynamic-print-style">
+        @page { size: 210mm 297mm; margin: 0; }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- 頂部復古工坊深綠金邊橫幅 -->
+    <header class="bg-[#182c25] text-[#f5ebd6] border-b-4 border-[#c89d54] shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-3.5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#d97706] to-[#92400e] flex items-center justify-center shadow-inner border border-[#fbbf24]/50 shrink-0">
+                    <svg class="w-7 h-7 text-amber-100" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21.5 4.5c-2.8 0-5.2 1.4-6.7 3.6L11 5.5 8.5 7l2.6 3.7c-.8 1.2-1.3 2.6-1.5 4.1L3 16l2 3 5.3-1.2c1.2 1 2.7 1.7 4.4 1.7 3.9 0 7-3.1 7-7 0-1.9-.8-3.7-2-5l1.8-3z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h1 class="serif-title text-xl md:text-2xl font-black tracking-wide text-[#fef3c7]">魔法木鳥 1:1 原尺寸模板與多層拼接產生器</h1>
+                        <span class="bg-[#c89d54] text-[#182c25] text-xs font-extrabold px-2.5 py-0.5 rounded-full">v5.0 典藏工坊版</span>
+                    </div>
+                    <p class="text-xs text-[#d5c7a9] mt-0.5">內含猛禽、熱帶鳥、水鳥 8 大物種 ｜ 支援「波浪羽翼切邊、多層次覆羽拼接、獨立展開扇尾、羅盤配重環」與自訂椴木板尺寸</p>
+                </div>
+            </div>
+
+            <!-- 輸出與跳轉操作按鈕組 -->
+            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end">
+                <a href="eye_screw_guide.html" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold px-3.5 py-2 rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm border border-amber-300">
+                    <span>🔩</span> 羊眼釘使用指南
+                </a>
+                <a href="index.html" class="bg-[#28443a] hover:bg-[#34574a] text-[#fde68a] border border-[#c89d54]/50 font-medium px-3.5 py-2 rounded-xl text-xs transition flex items-center gap-1.5">
+                    <span>🕊️</span> 回 v4.0 產生器
+                </a>
+                <button onclick="scrollToSection('workflow-showcase')" class="bg-[#28443a] hover:bg-[#34574a] text-[#fde68a] border border-[#c89d54]/50 font-medium px-3.5 py-2 rounded-xl text-xs transition flex items-center gap-1.5">
+                    <span>✨ 四大製作工序圖解</span>
+                </button>
+                <button onclick="downloadSVG()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3.5 py-2 rounded-xl shadow-md transition flex items-center gap-1.5 text-xs md:text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>下載 SVG 雷切檔</span>
+                </button>
+                <button onclick="downloadDXF()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-3.5 py-2 rounded-xl shadow-md transition flex items-center gap-1.5 text-xs md:text-sm border border-sky-300/40">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>下載 1:1 DXF 工程檔</span>
+                </button>
+                <button onclick="window.print()" class="bg-gradient-to-r from-[#d97706] to-[#b45309] hover:from-[#f59e0b] hover:to-[#d97706] text-white font-bold px-3.5 py-2 rounded-xl shadow-md transition flex items-center gap-1.5 text-xs md:text-sm border border-amber-300/40">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>直接列印 1:1 紙模</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 pt-6 space-y-8">
+
+        <!-- 區塊 A：三大分類、8 款世界鳥類 1:1 模板選擇器 -->
+        <section class="bg-[#fffdf9] rounded-2xl shadow-md border-2 border-[#dcc9a6] p-5">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-[#e5d5b5] pb-3.5 mb-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">🦅</span>
+                        <h2 class="serif-title text-lg md:text-xl font-black text-[#233831]">探索 8 款世界鳥類模板（三大主題系列）</h2>
+                    </div>
+                    <p class="text-xs text-stone-600 mt-0.5">點擊任一鳥種卡片，即可自動套用該物種專屬的「頭冠、鳥喙曲率、多層次波浪飛羽、獨立分叉尾羽」1:1 向量輪廓</p>
+                </div>
+                <!-- 分類篩選標籤 -->
+                <div class="flex flex-wrap gap-1.5" id="categoryTabs">
+                    <button onclick="filterCategory('all')" data-cat="all" class="cat-btn bg-[#182c25] text-[#fef3c7] text-xs font-bold px-3 py-1.5 rounded-lg transition">全部物種 (8)</button>
+                    <button onclick="filterCategory('raptor')" data-cat="raptor" class="cat-btn bg-stone-200 hover:bg-stone-300 text-stone-700 text-xs font-bold px-3 py-1.5 rounded-lg transition">🦅 猛禽系列 (老鷹/貓頭鷹)</button>
+                    <button onclick="filterCategory('tropical')" data-cat="tropical" class="cat-btn bg-stone-200 hover:bg-stone-300 text-stone-700 text-xs font-bold px-3 py-1.5 rounded-lg transition">🦜 熱帶鳥類 (金剛鸚鵡/巨嘴鳥/蜂鳥)</button>
+                    <button onclick="filterCategory('flight')" data-cat="flight" class="cat-btn bg-stone-200 hover:bg-stone-300 text-stone-700 text-xs font-bold px-3 py-1.5 rounded-lg transition">🕊️ 飛行與水鳥 (燕子/綠頭鴨/知更鳥)</button>
+                </div>
+            </div>
+
+            <!-- 8 大鳥種視覺卡片網格 -->
+            <div id="speciesGrid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
+                <!-- 由 JS 動態渲染 8 張高辨識度鳥種 SVG 卡片 -->
+            </div>
+        </section>
+
+        <!-- 區塊 B：核心工作區 (左側參數與多層拼接控制 + 右側 1:1 模板預覽畫布) -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- 左側控制面板 (4 欄) -->
+            <div class="lg:col-span-4 space-y-5">
+
+                <!-- 1. 多層次羽翼拼接與零件結構模式 (對齊截圖「每個零件各司其職」) -->
+                <div class="bg-[#fffdf9] rounded-2xl shadow-md p-5 border-2 border-[#c89d54] space-y-3.5">
+                    <div class="flex justify-between items-center border-b border-amber-200 pb-2">
+                        <h3 class="serif-title font-bold text-base text-[#182c25] flex items-center gap-1.5">
+                            <span>🪶</span> 1. 多層次羽翼拼接與工藝結構
+                        </h3>
+                        <span class="text-[11px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded font-bold">零件各司其職</span>
+                    </div>
+
+                    <div class="space-y-2.5 text-xs">
+                        <label class="flex items-start gap-2.5 p-2 rounded-xl bg-amber-50/70 border border-amber-200 cursor-pointer hover:bg-amber-100/60 transition">
+                            <input type="checkbox" id="optScallopWing" checked onchange="updateTemplate()" class="mt-0.5 w-4 h-4 accent-amber-700 rounded">
+                            <div>
+                                <div class="font-bold text-stone-800">飛羽波浪切邊輪廓 (Scalloped Feathers)</div>
+                                <div class="text-[11px] text-stone-600">將平滑翅膀後緣升級為寫實多羽片波浪輪廓與雷雕羽軸線</div>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-2.5 p-2 rounded-xl bg-amber-50/70 border border-amber-200 cursor-pointer hover:bg-amber-100/60 transition">
+                            <input type="checkbox" id="optMultiWingCovert" checked onchange="updateTemplate()" class="mt-0.5 w-4 h-4 accent-amber-700 rounded">
+                            <div>
+                                <div class="font-bold text-stone-800">多層次覆羽拼接片 (2-Tier Layered Wing)</div>
+                                <div class="text-[11px] text-stone-600">額外生成上層「中覆羽拼接片」，疊貼於主翼根部創造 3D 漸層羽翼</div>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-2.5 p-2 rounded-xl bg-amber-50/70 border border-amber-200 cursor-pointer hover:bg-amber-100/60 transition">
+                            <input type="checkbox" id="optSeparateTail" checked onchange="updateTemplate()" class="mt-0.5 w-4 h-4 accent-amber-700 rounded">
+                            <div>
+                                <div class="font-bold text-stone-800">獨立展開扇形尾羽 (Spread Tail Piece)</div>
+                                <div class="text-[11px] text-stone-600">生成可卡合於鳥尾水平槽的「展開扇尾零件」，重現鸚鵡與老鷹華麗尾羽</div>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-2.5 p-2 rounded-xl bg-amber-50/70 border border-amber-200 cursor-pointer hover:bg-amber-100/60 transition">
+                            <input type="checkbox" id="optCompassWeight" checked onchange="updateTemplate()" class="mt-0.5 w-4 h-4 accent-amber-700 rounded">
+                            <div>
+                                <div class="font-bold text-stone-800">復古羅盤星芒配重圓盤 (Compass Weight)</div>
+                                <div class="text-[11px] text-stone-600">在下方 3D 十字配重環刻上八芒星羅盤紋飾，兼具平衡與鄉村風美感</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 2. 自訂椴木板長寬厚尺寸與雷切公差 -->
+                <div class="bg-[#fffdf9] rounded-2xl shadow-md p-5 border border-[#dcc9a6] space-y-3.5">
+                    <div class="flex justify-between items-center border-b border-stone-200 pb-2">
+                        <h3 class="serif-title font-bold text-base text-[#182c25]">🪵 2. 自訂椴木板尺寸 (寬×長×厚)</h3>
+                        <span class="text-[11px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">支援任意邊料</span>
+                    </div>
+
+                    <!-- 常用板材規格快捷鍵 -->
+                    <div>
+                        <label class="block text-[11px] font-semibold text-stone-500 mb-1">快速套用常用木板規格：</label>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button type="button" onclick="setBoardSize(210, 297, 3.0)" class="text-[11px] bg-stone-100 hover:bg-amber-100 text-stone-700 px-2 py-1 rounded border border-stone-300 font-medium transition">A4 (210×297×3mm)</button>
+                            <button type="button" onclick="setBoardSize(300, 300, 3.0)" class="text-[11px] bg-stone-100 hover:bg-amber-100 text-stone-700 px-2 py-1 rounded border border-stone-300 font-medium transition">方板 (300×300×3mm)</button>
+                            <button type="button" onclick="setBoardSize(450, 300, 3.0)" class="text-[11px] bg-stone-100 hover:bg-amber-100 text-stone-700 px-2 py-1 rounded border border-stone-300 font-medium transition">大板 (450×300×3mm)</button>
+                            <button type="button" onclick="setBoardSize(210, 297, 15.0)" class="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-900 px-2 py-1 rounded border border-amber-300 font-medium transition">實木厚料 (15mm免疊合)</button>
+                        </div>
+                    </div>
+
+                    <!-- 寬度 W、長度 H、單板厚度 T 自由輸入 -->
+                    <div class="grid grid-cols-3 gap-2 bg-stone-100/80 p-2.5 rounded-xl border border-stone-300">
+                        <div>
+                            <label class="block text-[11px] font-bold text-stone-700 mb-1">板寬 W (mm)</label>
+                            <input type="number" id="boardWidth" min="120" max="1200" step="1" value="210" oninput="updateTemplate()" class="w-full rounded-lg border-stone-300 border p-1.5 text-sm font-bold text-center bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-stone-700 mb-1">板長 H (mm)</label>
+                            <input type="number" id="boardHeight" min="150" max="1200" step="1" value="297" oninput="updateTemplate()" class="w-full rounded-lg border-stone-300 border p-1.5 text-sm font-bold text-center bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-stone-700 mb-1">板厚 T (mm)</label>
+                            <input type="number" id="boardThick" min="0.5" max="50" step="0.1" value="3.0" oninput="onThickChange()" class="w-full rounded-lg border-amber-400 border-2 p-1.5 text-sm font-bold text-center bg-white text-amber-900">
+                        </div>
+                    </div>
+
+                    <!-- 定位銷孔徑與雷切 Kerf 公差 -->
+                    <div class="grid grid-cols-2 gap-2.5 text-xs">
+                        <div class="bg-purple-50/70 p-2.5 rounded-xl border border-purple-200">
+                            <label class="block text-[11px] font-bold text-purple-900 mb-1">竹籤定位銷孔徑 (mm)</label>
+                            <div class="flex items-center gap-1">
+                                <input type="number" id="dowelDia" min="0" max="10" step="0.1" value="3.0" oninput="updateTemplate()" class="w-16 text-center border border-purple-300 rounded py-1 font-bold text-purple-950 bg-white">
+                                <button type="button" onclick="setDowel(0)" class="text-[10px] bg-white px-1.5 py-1 rounded border">無</button>
+                                <button type="button" onclick="setDowel(3.0)" class="text-[10px] bg-purple-200 text-purple-900 px-1.5 py-1 rounded font-bold">3mm</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-200">
+                            <label class="block text-[11px] font-bold text-emerald-900 mb-1">雷切公差 Kerf (mm)</label>
+                            <div class="flex items-center gap-1">
+                                <input type="number" id="kerfOffset" min="0.00" max="0.80" step="0.01" value="0.15" oninput="updateTemplate()" class="w-16 text-center border border-emerald-300 rounded py-1 font-bold text-emerald-950 bg-white">
+                                <button type="button" onclick="setKerf(0)" class="text-[10px] bg-white px-1.5 py-1 rounded border">手鋸0</button>
+                                <button type="button" onclick="setKerf(0.15)" class="text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-1 rounded font-bold">0.15</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 疊合層數與自動計算面板 -->
+                    <div class="bg-stone-50 rounded-xl p-3 border border-stone-200 space-y-2 text-xs">
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-stone-700">鳥身疊合層數 (建議總厚 12~16mm)：</span>
+                            <div class="flex items-center gap-1">
+                                <input type="number" id="bodyLayers" min="1" max="15" value="5" oninput="updateTemplate()" class="w-12 text-center border rounded py-0.5 font-bold text-amber-900 bg-white">
+                                <span>層</span>
+                                <span id="calc_bodyThick" class="bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-bold">= 15.0 mm</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-stone-700">主翼基底層數 (另含上層覆羽片)：</span>
+                            <div class="flex items-center gap-1">
+                                <input type="number" id="wingLayers" min="1" max="6" value="1" oninput="updateTemplate()" class="w-12 text-center border rounded py-0.5 font-bold text-emerald-900 bg-white">
+                                <span>層</span>
+                                <span id="calc_wingThick" class="bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded font-bold">= 3.0 mm</span>
+                            </div>
+                        </div>
+                        <div id="bevelHint" class="pt-1.5 border-t border-stone-200 text-[11px] text-stone-600 leading-relaxed"></div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-0.5">
+                        <label class="text-xs font-semibold text-stone-700">依板材面積自動滿版排入多層夾心件</label>
+                        <input type="checkbox" id="autoNestBody" checked onchange="updateTemplate()" class="w-4 h-4 accent-amber-700 rounded">
+                    </div>
+                </div>
+
+                <!-- 3. 尺寸微調與上色預覽 -->
+                <div class="bg-[#fffdf9] rounded-2xl shadow-md p-5 border border-[#dcc9a6] space-y-3">
+                    <div class="flex justify-between items-center border-b border-stone-200 pb-2">
+                        <h3 class="serif-title font-bold text-base text-[#182c25]">📐 3. 個別比例微調與彩繪預覽</h3>
+                        <label class="flex items-center gap-1.5 text-xs font-bold text-amber-800 cursor-pointer">
+                            <input type="checkbox" id="showColor" checked onchange="updateTemplate()" class="w-4 h-4 accent-amber-600 rounded">
+                            <span>彩繪色塊預覽</span>
+                        </label>
+                    </div>
+
+                    <div class="space-y-2.5 text-xs">
+                        <div>
+                            <div class="flex justify-between font-medium mb-0.5">
+                                <span>鳥身總長 (Body Length)</span>
+                                <span id="val_bodyLen" class="text-amber-800 font-bold">155 mm</span>
+                            </div>
+                            <input type="range" id="bodyLen" min="95" max="220" value="155" oninput="updateTemplate()" class="w-full accent-amber-700">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between font-medium mb-0.5">
+                                <span>鳥身高度 (Body Height)</span>
+                                <span id="val_bodyHeight" class="text-amber-800 font-bold">36 mm</span>
+                            </div>
+                            <input type="range" id="bodyHeight" min="24" max="58" value="36" oninput="updateTemplate()" class="w-full accent-amber-700">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between font-medium mb-0.5">
+                                <span>單側主翼展長 (Wing Span)</span>
+                                <span id="val_wingSpan" class="text-amber-800 font-bold">115 mm</span>
+                            </div>
+                            <input type="range" id="wingSpan" min="75" max="175" value="115" oninput="updateTemplate()" class="w-full accent-amber-700">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between font-medium mb-0.5">
+                                <span>翅膀前後弦寬 (Wing Chord)</span>
+                                <span id="val_wingChord" class="text-amber-800 font-bold">66 mm</span>
+                            </div>
+                            <input type="range" id="wingChord" min="42" max="95" value="66" oninput="updateTemplate()" class="w-full accent-amber-700">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div>
+                                <div class="flex justify-between font-medium mb-0.5">
+                                    <span>穿線孔徑</span>
+                                    <span id="val_holeDia" class="text-amber-800 font-bold">2.0 mm</span>
+                                </div>
+                                <input type="range" id="holeDia" min="1.2" max="4.0" step="0.2" value="2.0" oninput="updateTemplate()" class="w-full accent-amber-700">
+                            </div>
+                            <div>
+                                <div class="flex justify-between font-medium mb-0.5">
+                                    <span>懸吊偏置距</span>
+                                    <span id="val_hingeOffset" class="text-amber-800 font-bold">8 mm</span>
+                                </div>
+                                <input type="range" id="hingeOffset" min="5" max="15" step="1" value="8" oninput="updateTemplate()" class="w-full accent-amber-700">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. 可動關節與動態平衡模擬器 -->
+                <div class="bg-[#182c25] text-[#f5ebd6] rounded-2xl shadow-md p-4 border-2 border-[#c89d54] space-y-2">
+                    <div class="flex justify-between items-center">
+                        <h3 class="serif-title font-bold text-sm text-[#fde68a]">⚙️ 可動關節與配重振翅即時模擬</h3>
+                        <span id="sim_thickBadge" class="text-[11px] bg-[#c89d54] text-[#182c25] px-2 py-0.5 rounded-full font-extrabold">動態平衡</span>
+                    </div>
+                    <p class="text-[11px] text-[#d5c7a9]">拉動下方羅盤配重圓盤，藉由背脊內側關節與外側吊線力矩差，帶動多層羽翼優雅拍動：</p>
+                    <div class="bg-[#0f1c18] rounded-xl p-2 flex justify-center items-center border border-[#c89d54]/30">
+                        <svg id="simSvg" viewBox="-145 -85 290 175" class="w-full h-36"></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側 1:1 模板畫布預覽區 (8 欄) -->
+            <div class="lg:col-span-8 flex flex-col items-center">
+                <!-- 畫布狀態列 -->
+                <div class="w-full flex flex-wrap justify-between items-center gap-2 mb-2.5 px-1">
+                    <div class="flex items-center gap-2">
+                        <span id="currentSpeciesBadge" class="text-xs font-extrabold text-[#182c25] bg-[#fde68a] px-3 py-1 rounded-full border border-[#c89d54] shadow-sm">
+                            🦜 目前模板：緋紅金剛鸚鵡 (Guacamaya / Macaw)
+                        </span>
+                        <span id="canvasDimensionLabel" class="text-xs font-bold text-stone-700 bg-white px-3 py-1 rounded-full shadow-sm border border-stone-300">
+                            板材：210 × 297 × 3.0 mm
+                        </span>
+                    </div>
+                    <span id="fitWarningBadge" class="hidden text-xs font-bold text-rose-800 bg-rose-100 px-3 py-1 rounded-full border border-rose-300 animate-pulse">
+                        ⚠️ 零件超出目前板材邊界，請加大板寬/板長或微調翼展！
+                    </span>
+                </div>
+
+                <!-- 1:1 實體比例預覽捲動視窗 -->
+                <div class="w-full bg-[#e5dccb] rounded-2xl p-4 md:p-6 flex justify-center overflow-auto border-2 border-[#c8b798] shadow-inner">
+                    <div id="print-area" class="bg-white shadow-2xl transition-all duration-150" style="width: 210mm; height: 297mm;">
+                        <svg id="templateSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="210mm" height="297mm"></svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 區塊 C：對齊截圖之「魔法木鳥・四大步驟教學模型與工藝指南」展示區 -->
+        <section id="workflow-showcase" class="bg-[#182c25] text-[#f5ebd6] rounded-3xl p-6 md:p-8 border-2 border-[#c89d54] shadow-xl space-y-6">
+            <div class="text-center max-w-2xl mx-auto space-y-2">
+                <span class="bg-[#c89d54]/20 text-[#fde68a] border border-[#c89d54] text-xs font-bold px-3 py-1 rounded-full">✨ 從平面模板到靈動飛鳥</span>
+                <h2 class="serif-title text-2xl md:text-3xl font-black text-[#fef3c7]">每個零件各司其職・四大核心工藝流程</h2>
+                <p class="text-xs md:text-sm text-[#d5c7a9]">不論使用手線鋸搭配木工邊料，或使用雷射切割機加工 3mm 椴木板，照著以下四個階段就能完成媲美專業職人級的動態平衡木鳥。</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- 卡片 1：每個零件各司其職 -->
+                <div class="bg-[#213a31] rounded-2xl p-5 border border-[#c89d54]/40 flex flex-col justify-between space-y-3">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-black tracking-wider text-[#c89d54] uppercase">STEP 01 ・ 辨識與下料</span>
+                            <span class="w-7 h-7 rounded-full bg-[#c89d54] text-[#182c25] font-black flex items-center justify-center text-xs">1</span>
+                        </div>
+                        <h3 class="serif-title text-lg font-bold text-[#fef3c7]">每個零件各司其職</h3>
+                        <p class="text-xs text-[#d5c7a9] leading-relaxed">
+                            組裝前先辨識 6 大核心組件：<strong class="text-amber-200">① 鳥身主體</strong>（外層彩繪片+夾心穿線槽層）、<strong class="text-amber-200">② 左右主飛羽</strong>、<strong class="text-amber-200">③ 上層覆羽拼接片</strong>、<strong class="text-amber-200">④ 獨立展開扇尾</strong>、<strong class="text-amber-200">⑤ 頂部平衡支撐橫桿</strong> 與 <strong class="text-amber-200">⑥ 羅盤配重圓盤</strong>。
+                        </p>
+                    </div>
+                    <div class="bg-[#14241e] rounded-xl p-2.5 text-[11px] text-amber-200/90 border border-[#c89d54]/20">
+                        💡 <strong>比例確認：</strong>列印紙模請選「100% 實際大小」，先核對右上角 50mm（或 1 英吋/25.4mm）比例尺。
+                    </div>
+                </div>
+
+                <!-- 卡片 2：切割與多層疊合組裝 -->
+                <div class="bg-[#213a31] rounded-2xl p-5 border border-[#c89d54]/40 flex flex-col justify-between space-y-3">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-black tracking-wider text-[#c89d54] uppercase">STEP 02 ・ 切割與拼接</span>
+                            <span class="w-7 h-7 rounded-full bg-[#c89d54] text-[#182c25] font-black flex items-center justify-center text-xs">2</span>
+                        </div>
+                        <h3 class="serif-title text-lg font-bold text-[#fef3c7]">切割與多層次羽翼拼接</h3>
+                        <p class="text-xs text-[#d5c7a9] leading-relaxed">
+                            沿紅實線切下零件後，插入 <strong class="text-amber-200">Ø3mm 竹籤定位銷（紫圈）</strong>將多層鳥身疊合膠合（中央夾心層直槽會自動形成垂直穿線孔道）。接著將「上層覆羽片」疊貼於主翼上方，並把「展開扇形尾羽」卡入鳥尾後槽。
+                        </p>
+                    </div>
+                    <div class="bg-[#14241e] rounded-xl p-2.5 text-[11px] text-amber-200/90 border border-[#c89d54]/20">
+                        🛠️ <strong>防干涉斜磨：</strong>將左右主翼根部腹面沿藍虛線磨出 42° 內斜角，確保下拍超過 60° 不卡頓。
+                    </div>
+                </div>
+
+                <!-- 卡片 3：可動關節設計 -->
+                <div class="bg-[#213a31] rounded-2xl p-5 border border-[#c89d54]/40 flex flex-col justify-between space-y-3">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-black tracking-wider text-[#c89d54] uppercase">STEP 03 ・ 關節與平衡</span>
+                            <span class="w-7 h-7 rounded-full bg-[#c89d54] text-[#182c25] font-black flex items-center justify-center text-xs">3</span>
+                        </div>
+                        <h3 class="serif-title text-lg font-bold text-[#fef3c7]">可動關節與動態平衡</h3>
+                        <p class="text-xs text-[#d5c7a9] leading-relaxed">
+                            利用微型羊眼釘或耐磨棉線穿過<strong class="text-amber-200">「鳥身背脊孔 ↔ 翼根內側孔」</strong>構成活動鉸鏈；再由頂部支撐橫桿垂下兩條等長吊線綁在翅膀外側偏置孔，中央拉繩穿過鳥腹連接下方<strong class="text-amber-200">羅盤配重圓盤</strong>。
+                        </p>
+                    </div>
+                    <div class="bg-[#14241e] rounded-xl p-2.5 text-[11px] text-amber-200/90 border border-[#c89d54]/20">
+                        ⚖️ <strong>靈動秘訣：</strong>內外支點偏置 8mm 創造完美槓桿，輕拉配重盤放開即可優雅振翅。
+                    </div>
+                </div>
+
+                <!-- 卡片 4：上色與風格化 -->
+                <div class="bg-[#213a31] rounded-2xl p-5 border border-[#c89d54]/40 flex flex-col justify-between space-y-3">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-black tracking-wider text-[#c89d54] uppercase">STEP 04 ・ 上色與風格化</span>
+                            <span class="w-7 h-7 rounded-full bg-[#c89d54] text-[#182c25] font-black flex items-center justify-center text-xs">4</span>
+                        </div>
+                        <h3 class="serif-title text-lg font-bold text-[#fef3c7]">上色搭配與個人風格</h3>
+                        <p class="text-xs text-[#d5c7a9] leading-relaxed">
+                            可保留溫潤原木紋理並塗上透明木蠟油，或沿著模板上的<strong class="text-amber-200">藍色分色虛線</strong>，為金剛鸚鵡塗上緋紅身軀、金黃覆羽與鈷藍飛羽尖端，打造獨一無二的鄉村風吊飾與手作市集商品。
+                        </p>
+                    </div>
+                    <div class="bg-[#14241e] rounded-xl p-2.5 text-[11px] text-amber-200/90 border border-[#c89d54]/20">
+                        🎨 <strong>多層次上色技巧：</strong>先為各層覆羽片獨立上色，乾透後再疊合黏貼，分色邊界最乾淨俐落！
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        /**
+         * 8 款世界鳥類資料庫 (涵蓋截圖中三大類別：猛禽、熱帶鳥類、飛行與水鳥)
+         * 每種鳥定義專屬幾何特徵參數與彩繪配色
+         */
+        const speciesCatalog = {
+            macaw: {
+                id: 'macaw',
+                category: 'tropical',
+                name: '緋紅金剛鸚鵡',
+                eng: 'Guacamaya / Macaw',
+                tag: '熱帶鳥類人氣王',
+                bodyLen: 168, bodyHeight: 36, wingSpan: 122, wingChord: 66, holeDia: 2.0, hingeOffset: 8,
+                feathers: 6, tailFeathers: 5, tailLen: 42,
+                colors: { body: '#dc2626', head: '#ef4444', covert: '#facc15', wingTip: '#1d4ed8', beak: '#fef3c7', cheek: '#ffffff', tail: '#ef4444' },
+                desc: '鉤曲大嘴、修長多層次階梯尾羽與紅黃藍三色漸層雙翼'
+            },
+            eagle: {
+                id: 'eagle',
+                category: 'raptor',
+                name: '白頭海鵰 (老鷹)',
+                eng: 'Bald Eagle / Águila',
+                tag: '猛禽系列代表',
+                bodyLen: 165, bodyHeight: 35, wingSpan: 145, wingChord: 68, holeDia: 2.2, hingeOffset: 9,
+                feathers: 7, tailFeathers: 5, tailLen: 34,
+                colors: { body: '#5c3a21', head: '#f8fafc', covert: '#78350f', wingTip: '#27170c', beak: '#f59e0b', cheek: '#f8fafc', tail: '#f8fafc' },
+                desc: '威猛下鉤鷹喙、寬闊指狀初級飛羽與純白展開扇尾'
+            },
+            toucan: {
+                id: 'toucan',
+                category: 'tropical',
+                name: '托哥巨嘴鳥',
+                eng: 'Toco Toucan / Tucán',
+                tag: '熱帶巨喙焦點',
+                bodyLen: 162, bodyHeight: 38, wingSpan: 112, wingChord: 64, holeDia: 2.0, hingeOffset: 8,
+                feathers: 5, tailFeathers: 4, tailLen: 30,
+                colors: { body: '#1e293b', head: '#0f172a', covert: '#334155', wingTip: '#0f172a', beak: '#f97316', cheek: '#facc15', tail: '#1e293b' },
+                desc: '超大弧形橘黃巨喙搭配黑白對比身軀，視覺張力十足'
+            },
+            hummingbird: {
+                id: 'hummingbird',
+                category: 'tropical',
+                name: '翠綠蜂鳥',
+                eng: 'Hummingbird / Colibrí',
+                tag: '靈動修長針喙',
+                bodyLen: 145, bodyHeight: 30, wingSpan: 108, wingChord: 56, holeDia: 1.8, hingeOffset: 7,
+                feathers: 5, tailFeathers: 4, tailLen: 32,
+                colors: { body: '#10b981', head: '#059669', covert: '#34d399', wingTip: '#064e3b', beak: '#334155', cheek: '#ec4899', tail: '#047857' },
+                desc: '超長細針狀採蜜鳥喙、流線高掠翼與寶石綠喉羽'
+            },
+            owl: {
+                id: 'owl',
+                category: 'raptor',
+                name: '雕鴞 (貓頭鷹)',
+                eng: 'Great Horned Owl',
+                tag: '夜行猛禽寬翼',
+                bodyLen: 148, bodyHeight: 42, wingSpan: 132, wingChord: 72, holeDia: 2.0, hingeOffset: 8,
+                feathers: 6, tailFeathers: 5, tailLen: 28,
+                colors: { body: '#854d0e', head: '#713f12', covert: '#a16207', wingTip: '#422006', beak: '#334155', cheek: '#fef08a', tail: '#713f12' },
+                desc: '立體角羽耳簇、豐滿圓潤胸腹與寬大靜音波浪飛羽'
+            },
+            swallow: {
+                id: 'swallow',
+                category: 'flight',
+                name: '家燕 (剪尾燕)',
+                eng: 'Barn Swallow',
+                tag: '高速流線剪尾',
+                bodyLen: 155, bodyHeight: 30, wingSpan: 128, wingChord: 56, holeDia: 1.8, hingeOffset: 7,
+                feathers: 5, tailFeathers: 4, tailLen: 38,
+                colors: { body: '#1e3a8a', head: '#172554', covert: '#2563eb', wingTip: '#0f172a', beak: '#1e293b', cheek: '#dc2626', tail: '#1e3a8a' },
+                desc: '鐮刀狀後掠高速飛羽與深分叉燕尾，飛行姿態最輕盈'
+            },
+            duck: {
+                id: 'duck',
+                category: 'flight',
+                name: '綠頭野鴨',
+                eng: 'Mallard Duck / Pato',
+                tag: '鄉村水鳥經典',
+                bodyLen: 162, bodyHeight: 34, wingSpan: 116, wingChord: 62, holeDia: 2.0, hingeOffset: 8,
+                feathers: 6, tailFeathers: 5, tailLen: 26,
+                colors: { body: '#9a3412', head: '#047857', covert: '#78716c', wingTip: '#1d4ed8', beak: '#eab308', cheek: '#ffffff', tail: '#57534e' },
+                desc: '修長扁平鴨嘴、翠綠頭頸白色頸環與藍色翼鏡覆羽'
+            },
+            robin: {
+                id: 'robin',
+                category: 'flight',
+                name: '歐亞知更鳥 / 山雀',
+                eng: 'European Robin / Tit',
+                tag: '新手入門首選',
+                bodyLen: 145, bodyHeight: 36, wingSpan: 110, wingChord: 65, holeDia: 2.0, hingeOffset: 8,
+                feathers: 5, tailFeathers: 3, tailLen: 28,
+                colors: { body: '#b45309', head: '#92400e', covert: '#d97706', wingTip: '#1e293b', beak: '#334155', cheek: '#ef4444', tail: '#78350f' },
+                desc: '圓潤可愛身形、橘紅胸羽與簡潔好切的流線輪廓'
+            }
+        };
+
+        let currentStyle = 'macaw';
+        let activeCategory = 'all';
+        let globalSimBodyThick = 15;
+        let globalSimWingThick = 6;
+
+        function scrollToSection(id) {
+            const el = document.getElementById(id);
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 渲染頂部 8 款世界鳥類選擇卡片
+        function renderSpeciesCards() {
+            const grid = document.getElementById('speciesGrid');
+            grid.innerHTML = '';
+            Object.values(speciesCatalog).forEach(sp => {
+                if (activeCategory !== 'all' && sp.category !== activeCategory) return;
+                const isActive = sp.id === currentStyle;
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.onclick = () => selectSpecies(sp.id);
+                card.className = `species-card text-left p-2.5 rounded-xl border-2 transition flex flex-col justify-between ${
+                    isActive ? 'active' : 'border-stone-200 bg-white hover:border-amber-300 hover:bg-amber-50/30'
+                }`;
+                card.innerHTML = `
+                    <div>
+                        <div class="w-full h-14 rounded-lg bg-stone-100/90 flex items-center justify-center mb-2 overflow-hidden border border-stone-200/70">
+                            ${getMiniBirdIconSVG(sp)}
+                        </div>
+                        <div class="font-bold text-xs text-stone-900 leading-tight">${sp.name}</div>
+                        <div class="text-[10px] text-stone-500 truncate mt-0.5">${sp.eng}</div>
+                    </div>
+                    <div class="mt-2 pt-1.5 border-t border-stone-200/80 flex justify-between items-center">
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100/80 text-amber-900">${sp.tag}</span>
+                        <span class="text-[10px] text-stone-400 font-mono">${sp.bodyLen}mm</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // 產生每張鳥種卡片的精緻小圖示 SVG
+        function getMiniBirdIconSVG(sp) {
+            const c = sp.colors;
+            if (sp.id === 'toucan') {
+                return `<svg viewBox="0 0 80 45" class="w-16 h-11">
+                    <path d="M5,24 C10,12 24,12 28,22 Z" fill="${c.beak}"/>
+                    <path d="M27,15 C38,12 52,16 68,26 L75,23 L70,32 C54,34 36,35 27,26 Z" fill="${c.body}"/>
+                    <path d="M35,18 C48,6 58,8 52,25 Z" fill="${c.covert}"/>
+                    <circle cx="31" cy="20" r="2.2" fill="#38bdf8"/>
+                </svg>`;
+            }
+            if (sp.id === 'hummingbird') {
+                return `<svg viewBox="0 0 80 45" class="w-16 h-11">
+                    <line x1="4" y1="22" x2="24" y2="22" stroke="${c.beak}" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M23,20 C32,14 48,18 66,28 L76,24 L68,33 C48,32 32,30 23,24 Z" fill="${c.body}"/>
+                    <path d="M34,20 L52,5 L58,12 L42,24 Z" fill="${c.covert}"/>
+                    <circle cx="28" cy="21" r="1.8" fill="#fff"/>
+                </svg>`;
+            }
+            if (sp.id === 'owl') {
+                return `<svg viewBox="0 0 80 45" class="w-16 h-11">
+                    <path d="M18,18 L22,10 L26,15 C38,14 54,17 68,26 L73,31 C54,36 32,36 20,26 Z" fill="${c.body}"/>
+                    <path d="M32,19 C45,7 60,9 55,27 Z" fill="${c.covert}"/>
+                    <circle cx="24" cy="21" r="3.2" fill="${c.cheek}"/>
+                    <circle cx="24" cy="21" r="1.5" fill="#000"/>
+                </svg>`;
+            }
+            return `<svg viewBox="0 0 80 45" class="w-16 h-11">
+                <path d="M12,23 L20,18 L20,26 Z" fill="${c.beak}"/>
+                <path d="M19,18 C32,12 50,16 66,25 L76,20 L72,31 C54,34 34,35 19,26 Z" fill="${c.body}"/>
+                <path d="M32,19 C46,6 58,8 52,25 Z" fill="${c.covert}"/>
+                <path d="M40,14 C50,5 62,7 56,22 Z" fill="${c.wingTip}" opacity="0.85"/>
+                <circle cx="24" cy="20" r="2" fill="#fff"/>
+                <circle cx="24" cy="20" r="1" fill="#000"/>
+            </svg>`;
+        }
+
+        function filterCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = 'cat-btn bg-[#182c25] text-[#fef3c7] text-xs font-bold px-3 py-1.5 rounded-lg transition';
+                } else {
+                    btn.className = 'cat-btn bg-stone-200 hover:bg-stone-300 text-stone-700 text-xs font-bold px-3 py-1.5 rounded-lg transition';
+                }
+            });
+            renderSpeciesCards();
+        }
+
+        function selectSpecies(id) {
+            currentStyle = id;
+            const sp = speciesCatalog[id];
+            document.getElementById('bodyLen').value = sp.bodyLen;
+            document.getElementById('bodyHeight').value = sp.bodyHeight;
+            document.getElementById('wingSpan').value = sp.wingSpan;
+            document.getElementById('wingChord').value = sp.wingChord;
+            document.getElementById('holeDia').value = sp.holeDia;
+            document.getElementById('hingeOffset').value = sp.hingeOffset;
+            renderSpeciesCards();
+            updateTemplate();
+        }
+
+        function setBoardSize(w, h, t) {
+            document.getElementById('boardWidth').value = w;
+            document.getElementById('boardHeight').value = h;
+            document.getElementById('boardThick').value = t;
+            onThickChange();
+        }
+
+        function setDowel(val) {
+            document.getElementById('dowelDia').value = val;
+            updateTemplate();
+        }
+
+        function setKerf(val) {
+            document.getElementById('kerfOffset').value = val;
+            updateTemplate();
+        }
+
+        function onThickChange() {
+            const t = parseFloat(document.getElementById('boardThick').value) || 3.0;
+            const recBodyLayers = Math.max(1, Math.round(15 / t));
+            // 若開啟上層覆羽拼接片，主翼基底預設 1 層 (1+1=2層漸層)；若未開則 2 層
+            const hasCovert = document.getElementById('optMultiWingCovert').checked;
+            const recWingLayers = (t <= 3.2 && !hasCovert) ? 2 : 1;
+            document.getElementById('bodyLayers').value = recBodyLayers;
+            document.getElementById('wingLayers').value = recWingLayers;
+            updateTemplate();
+        }
+
+        /**
+         * 根據不同物種生成專屬的鳥身 SVG Path 與分色特徵線
+         */
+        function getSpeciesBodyPaths(spId, bx, by, L, h, boardThick, optSeparateTail) {
+            let bodyPath = '';
+            let beakLine = '';
+            let headLine = '';
+            let tailSlot = '';
+
+            // 若啟用「獨立展開扇形尾羽」，在鳥尾端自動開一道水平嵌入卡槽 (深 12mm，寬 actualSlot)
+            if (optSeparateTail) {
+                tailSlot = `<rect x="${bx + L - 14}" y="${by + h * 0.20}" width="14" height="${boardThick}" class="dowel-line"/>`;
+            }
+
+            if (spId === 'macaw' || spId === 'eagle') {
+                // 鸚鵡 / 老鷹：具明顯下鉤彎喙 (Hooked Beak) 與修長尾柄
+                bodyPath = `
+                    M ${bx + L * 0.02} ${by + h * 0.62}
+                    C ${bx - L * 0.01} ${by + h * 0.35}, ${bx + L * 0.05} ${by + h * 0.12}, ${bx + L * 0.14} ${by + h * 0.08}
+                    C ${bx + L * 0.20} ${by - h * 0.02}, ${bx + L * 0.28} ${by}, ${bx + L * 0.35} ${by + h * 0.06}
+                    L ${bx + L * 0.72} ${by + h * 0.08}
+                    L ${bx + L} ${by + h * 0.02}
+                    L ${bx + L * 0.92} ${by + h * 0.45}
+                    C ${bx + L * 0.72} ${by + h * 0.62}, ${bx + L * 0.56} ${by + h}, ${bx + L * 0.34} ${by + h}
+                    C ${bx + L * 0.18} ${by + h}, ${bx + L * 0.10} ${by + h * 0.76}, ${bx + L * 0.06} ${by + h * 0.54}
+                    L ${bx + L * 0.02} ${by + h * 0.62}
+                    Z
+                `;
+                beakLine = `M ${bx + L * 0.11} ${by + h * 0.10} Q ${bx + L * 0.13} ${by + h * 0.35} ${bx + L * 0.07} ${by + h * 0.55}`;
+                headLine = `M ${bx + L * 0.28} ${by + h * 0.03} C ${bx + L * 0.26} ${by + h * 0.48}, ${bx + L * 0.20} ${by + h * 0.75}, ${bx + L * 0.14} ${by + h * 0.85}`;
+            } else if (spId === 'toucan') {
+                // 巨嘴鳥：前段 34% 為超大弧形香蕉巨喙
+                bodyPath = `
+                    M ${bx} ${by + h * 0.56}
+                    C ${bx + L * 0.03} ${by + h * 0.10}, ${bx + L * 0.20} ${by + h * 0.04}, ${bx + L * 0.34} ${by + h * 0.12}
+                    C ${bx + L * 0.42} ${by + h * 0.02}, ${bx + L * 0.52} ${by + h * 0.04}, ${bx + L * 0.74} ${by + h * 0.08}
+                    L ${bx + L} ${by - h * 0.06}
+                    L ${bx + L * 0.94} ${by + h * 0.42}
+                    C ${bx + L * 0.76} ${by + h * 0.65}, ${bx + L * 0.62} ${by + h}, ${bx + L * 0.42} ${by + h}
+                    C ${bx + L * 0.30} ${by + h}, ${bx + L * 0.26} ${by + h * 0.74}, ${bx + L * 0.24} ${by + h * 0.58}
+                    L ${bx} ${by + h * 0.56}
+                    Z
+                `;
+                beakLine = `M ${bx + L * 0.28} ${by + h * 0.10} L ${bx + L * 0.24} ${by + h * 0.58}`;
+                headLine = `M ${bx + L * 0.44} ${by + h * 0.04} C ${bx + L * 0.42} ${by + h * 0.52}, ${bx + L * 0.36} ${by + h * 0.78}, ${bx + L * 0.28} ${by + h * 0.84}`;
+            } else if (spId === 'hummingbird') {
+                // 蜂鳥：前段細長針狀喙，高翹尾
+                bodyPath = `
+                    M ${bx} ${by + h * 0.42}
+                    L ${bx + L * 0.24} ${by + h * 0.34}
+                    C ${bx + L * 0.28} ${by + h * 0.08}, ${bx + L * 0.38} ${by + h * 0.02}, ${bx + L * 0.48} ${by + h * 0.08}
+                    L ${bx + L * 0.74} ${by + h * 0.10}
+                    L ${bx + L} ${by - h * 0.14}
+                    L ${bx + L * 0.93} ${by + h * 0.46}
+                    C ${bx + L * 0.76} ${by + h * 0.66}, ${bx + L * 0.60} ${by + h}, ${bx + L * 0.42} ${by + h}
+                    C ${bx + L * 0.30} ${by + h}, ${bx + L * 0.26} ${by + h * 0.66}, ${bx + L * 0.24} ${by + h * 0.46}
+                    L ${bx} ${by + h * 0.42}
+                    Z
+                `;
+                beakLine = `M ${bx + L * 0.24} ${by + h * 0.34} L ${bx + L * 0.24} ${by + h * 0.46}`;
+                headLine = `M ${bx + L * 0.44} ${by + h * 0.06} Q ${bx + L * 0.40} ${by + h * 0.55} ${bx + L * 0.30} ${by + h * 0.82}`;
+            } else if (spId === 'owl') {
+                // 貓頭鷹：頭頂具立體耳羽突起，豐滿圓胸
+                bodyPath = `
+                    M ${bx + L * 0.02} ${by + h * 0.50}
+                    C ${bx + L * 0.04} ${by + h * 0.24}, ${bx + L * 0.10} ${by + h * 0.12}, ${bx + L * 0.14} ${by + h * 0.12}
+                    L ${bx + L * 0.18} ${by - h * 0.08}
+                    L ${bx + L * 0.23} ${by + h * 0.04}
+                    L ${bx + L * 0.74} ${by + h * 0.06}
+                    L ${bx + L} ${by + h * 0.08}
+                    L ${bx + L * 0.94} ${by + h * 0.52}
+                    C ${bx + L * 0.75} ${by + h * 0.75}, ${bx + L * 0.55} ${by + h * 1.02}, ${bx + L * 0.32} ${by + h}
+                    C ${bx + L * 0.14} ${by + h * 0.98}, ${bx + L * 0.05} ${by + h * 0.76}, ${bx + L * 0.02} ${by + h * 0.50}
+                    Z
+                `;
+                beakLine = `M ${bx + L * 0.08} ${by + h * 0.28} Q ${bx + L * 0.11} ${by + h * 0.48} ${bx + L * 0.06} ${by + h * 0.64}`;
+                headLine = `M ${bx + L * 0.25} ${by + h * 0.04} C ${bx + L * 0.26} ${by + h * 0.52}, ${bx + L * 0.20} ${by + h * 0.78}, ${bx + L * 0.12} ${by + h * 0.88}`;
+            } else if (spId === 'swallow') {
+                // 燕子：深分叉剪刀尾
+                bodyPath = `
+                    M ${bx} ${by + h * 0.48}
+                    C ${bx + L * 0.06} ${by + h * 0.22}, ${bx + L * 0.15} ${by + h * 0.02}, ${bx + L * 0.26} ${by + h * 0.04}
+                    L ${bx + L * 0.68} ${by + h * 0.08}
+                    L ${bx + L} ${by - h * 0.18}
+                    L ${bx + L * 0.84} ${by + h * 0.24}
+                    L ${bx + L * 0.98} ${by + h * 0.56}
+                    C ${bx + L * 0.72} ${by + h * 0.62}, ${bx + L * 0.56} ${by + h}, ${bx + L * 0.34} ${by + h}
+                    C ${bx + L * 0.16} ${by + h}, ${bx + L * 0.07} ${by + h * 0.75}, ${bx} ${by + h * 0.48}
+                    Z
+                `;
+                beakLine = `M ${bx + L * 0.07} ${by + h * 0.30} Q ${bx + L * 0.09} ${by + h * 0.48} ${bx + L * 0.06} ${by + h * 0.64}`;
+                headLine = `M ${bx + L * 0.25} ${by + h * 0.04} C ${bx + L * 0.23} ${by + h * 0.48}, ${bx + L * 0.18} ${by + h * 0.74}, ${bx + L * 0.12} ${by + h * 0.82}`;
+            } else if (spId === 'duck') {
+                // 綠頭鴨：前端扁平微翹鴨嘴與修長脖頸
+                bodyPath = `
+                    M ${bx} ${by + h * 0.46}
+                    C ${bx + L * 0.02} ${by + h * 0.32}, ${bx + L * 0.09} ${by + h * 0.34}, ${bx + L * 0.14} ${by + h * 0.28}
+                    C ${bx + L * 0.18} ${by + h * 0.04}, ${bx + L * 0.28} ${by}, ${bx + L * 0.36} ${by + h * 0.12}
+                    L ${bx + L * 0.76} ${by + h * 0.10}
+                    L ${bx + L} ${by - h * 0.04}
+                    L ${bx + L * 0.94} ${by + h * 0.48}
+                    C ${bx + L * 0.78} ${by + h * 0.76}, ${bx + L * 0.62} ${by + h}, ${bx + L * 0.38} ${by + h}
+                    C ${bx + L * 0.20} ${by + h}, ${bx + L * 0.14} ${by + h * 0.72}, ${bx + L * 0.12} ${by + h * 0.56}
+                    L ${bx} ${by + h * 0.46}
+                    Z
+                `;
+                beakLine = `M ${bx + L * 0.14} ${by + h * 0.28} L ${bx + L * 0.12} ${by + h * 0.56}`;
+                headLine = `M ${bx + L * 0.35} ${by + h * 0.12} L ${bx + L * 0.31} ${by + h * 0.88}`;
+            } else {
+                // 知更鳥 / 山雀：經典流線
+                bodyPath = `
+                    M ${bx} ${by + h * 0.52}
+                    C ${bx + L * 0.06} ${by + h * 0.25}, ${bx + L * 0.14} ${by}, ${bx + L * 0.26} ${by}
+                    L ${bx + L * 0.72} ${by + h * 0.04}
+                    L ${bx + L} ${by - h * 0.12}
+                    L ${bx + L * 0.94} ${by + h * 0.42}
+                    C ${bx + L * 0.76} ${by + h * 0.58}, ${bx + L * 0.62} ${by + h}, ${bx + L * 0.36} ${by + h}
+                    C ${bx + L * 0.18} ${by + h}, ${bx + L * 0.08} ${by + h * 0.78}, ${bx} ${by + h * 0.52}
+                    Z
+                `;
+                beakLine = `M ${bx + L * 0.08} ${by + h * 0.31} Q ${bx + L * 0.10} ${by + h * 0.52} ${bx + L * 0.07} ${by + h * 0.69}`;
+                headLine = `M ${bx + L * 0.26} ${by} C ${bx + L * 0.24} ${by + h * 0.45}, ${bx + L * 0.18} ${by + h * 0.72}, ${bx + L * 0.12} ${by + h * 0.82}`;
+            }
+
+            return { bodyPath, beakLine, headLine, tailSlot };
+        }
+
+        /**
+         * 生成具備「波浪飛羽切邊 (Scalloped Feathers)」與「雷雕羽軸線」的翅膀 SVG Path
+         */
+        function buildScallopedWingPath(wx, wy, C, S, numFeathers, isScalloped) {
+            if (!isScalloped) {
+                const path = `
+                    M ${wx} ${wy}
+                    L ${wx + C} ${wy}
+                    C ${wx + C * 1.04} ${wy + S * 0.48}, ${wx + C * 0.62} ${wy + S * 0.92}, ${wx + C * 0.12} ${wy + S}
+                    C ${wx + C * 0.02} ${wy + S * 0.98}, ${wx} ${wy + S * 0.65}, ${wx} ${wy}
+                    Z
+                `;
+                return { path, vaneLines: '' };
+            }
+
+            // 波浪飛羽外廓：由根部 (wx, wy) -> (wx+C, wy) -> 後緣分成 numFeathers 段波浪弧線收至翼尖 (wx+C*0.08, wy+S) -> 前緣圓滑回根部
+            let d = `M ${wx} ${wy} L ${wx + C} ${wy} `;
+            let vaneLines = '';
+            const startX = wx + C;
+            const startY = wy + S * 0.12;
+            const endX = wx + C * 0.08;
+            const endY = wy + S;
+
+            d += `L ${startX} ${startY} `;
+
+            for (let i = 0; i < numFeathers; i++) {
+                const t1 = i / numFeathers;
+                const t2 = (i + 1) / numFeathers;
+                const tm = (t1 + t2) / 2;
+
+                // 基本包絡曲線點
+                const x1 = startX + (endX - startX) * Math.pow(t1, 1.15);
+                const y1 = startY + (endY - startY) * Math.pow(t1, 0.88);
+                const x2 = startX + (endX - startX) * Math.pow(t2, 1.15);
+                const y2 = startY + (endY - startY) * Math.pow(t2, 0.88);
+
+                // 波峰外推量
+                const bulgeX = 5.5 * (1 - t1 * 0.35);
+                const bulgeY = 3.8 * (1 - t1 * 0.25);
+                const cx = (x1 + x2) / 2 + bulgeX;
+                const cy = (y1 + y2) / 2 + bulgeY;
+
+                // 每個飛羽瓣的圓弧與內縮切口
+                const notchX = x2 - 2.2 * (1 - t2 * 0.5);
+                const notchY = y2 - 2.0 * (1 - t2 * 0.5);
+
+                d += `Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)} `;
+                if (i < numFeathers - 1) {
+                    d += `L ${notchX.toFixed(1)} ${notchY.toFixed(1)} `;
+                    // 加入藍色虛線羽片分界雕線
+                    vaneLines += `<line x1="${notchX.toFixed(1)}" y1="${notchY.toFixed(1)}" x2="${(wx + C * (0.45 - t2 * 0.28)).toFixed(1)}" y2="${(wy + S * (0.18 + t2 * 0.45)).toFixed(1)}" class="score-line"/>`;
+                }
+            }
+
+            // 前緣流線收回翼根
+            d += `C ${(wx + C * 0.01).toFixed(1)} ${(wy + S * 0.96).toFixed(1)}, ${wx} ${(wy + S * 0.62).toFixed(1)}, ${wx} ${wy} Z`;
+            return { path: d, vaneLines };
+        }
+
+        /**
+         * 生成「獨立展開扇形尾羽 (Spread Tail Piece)」(對應截圖中五瓣/多瓣扇形尾巴零件)
+         */
+        function buildSpreadTailGroup(tx, ty, sp, actualSlotWidth, r, showColor) {
+            const W = 54;
+            const H = sp.tailLen || 34;
+            const lobes = sp.tailFeathers || 5;
+            const cx = tx + W / 2;
+
+            // 頂部中央凸榫與卡槽對插結構 (可垂直卡入鳥尾後槽)
+            let d = `M ${cx - 8} ${ty} L ${cx + 8} ${ty} L ${cx + W / 2} ${ty + H * 0.48} `;
+            let vaneLines = '';
+
+            // 底部展開多瓣扇形尾羽
+            const leftX = tx;
+            const rightX = tx + W;
+            const baseArcY = ty + H * 0.48;
+
+            for (let i = 0; i < lobes; i++) {
+                const t1 = i / lobes;
+                const t2 = (i + 1) / lobes;
+                const x1 = rightX - W * t1;
+                const x2 = rightX - W * t2;
+                const xm = (x1 + x2) / 2;
+                // 中央尾羽最長，兩側漸短
+                const distFromCenter = Math.abs((i + 0.5) / lobes - 0.5) * 2;
+                const lobeTipY = ty + H * (1.05 - distFromCenter * 0.28);
+                const valleyY = ty + H * (0.76 - distFromCenter * 0.18);
+
+                d += `Q ${xm.toFixed(1)} ${lobeTipY.toFixed(1)} ${x2.toFixed(1)} ${valleyY.toFixed(1)} `;
+                if (i < lobes - 1) {
+                    vaneLines += `<line x1="${x2.toFixed(1)}" y1="${valleyY.toFixed(1)}" x2="${cx.toFixed(1)}" y2="${(ty + 8).toFixed(1)}" class="score-line"/>`;
+                }
+            }
+
+            d += `L ${cx - 8} ${ty} Z`;
+
+            let colorFill = '';
+            if (showColor) {
+                colorFill = `<path d="${d}" fill="${sp.colors.tail}" fill-opacity="0.22" stroke="none"/>`;
+            }
+
+            return `
+                <g>
+                    ${colorFill}
+                    <path d="${d}" class="cut-line"/>
+                    ${vaneLines}
+                    <!-- 尾羽中央與鳥身對插緊配卡槽 -->
+                    <rect x="${cx - actualSlotWidth / 2}" y="${ty}" width="${actualSlotWidth}" height="11" class="dowel-line"/>
+                    <circle cx="${cx - 4.5}" cy="${ty + 4}" r="${r * 0.85}" class="hole-line"/>
+                    <circle cx="${cx + 4.5}" cy="${ty + 4}" r="${r * 0.85}" class="hole-line"/>
+                    <text x="${tx + 4}" y="${ty + H + 4.5}" class="guide-text" font-weight="bold">展開扇尾 (Tail) × 1 (卡槽 ${actualSlotWidth.toFixed(2)}mm)</text>
+                </g>
+            `;
+        }
+
+        function updateTemplate() {
+            const sp = speciesCatalog[currentStyle];
+            const boardW = Math.max(100, parseFloat(document.getElementById('boardWidth').value) || 210);
+            const boardH = Math.max(120, parseFloat(document.getElementById('boardHeight').value) || 297);
+            const boardThick = Math.max(0.5, parseFloat(document.getElementById('boardThick').value) || 3.0);
+            const bodyLayers = Math.max(1, parseInt(document.getElementById('bodyLayers').value) || 1);
+            const wingLayers = Math.max(1, parseInt(document.getElementById('wingLayers').value) || 1);
+            const dowelDia = Math.max(0, parseFloat(document.getElementById('dowelDia').value) || 0);
+            const kerfOffset = Math.max(0, parseFloat(document.getElementById('kerfOffset').value) || 0);
+            const autoNestBody = document.getElementById('autoNestBody').checked;
+
+            const optScallopWing = document.getElementById('optScallopWing').checked;
+            const optMultiWingCovert = document.getElementById('optMultiWingCovert').checked;
+            const optSeparateTail = document.getElementById('optSeparateTail').checked;
+            const optCompassWeight = document.getElementById('optCompassWeight').checked;
+
+            // 更新畫布與列印尺寸
+            const printArea = document.getElementById('print-area');
+            const svg = document.getElementById('templateSvg');
+            printArea.style.width = boardW + 'mm';
+            printArea.style.height = boardH + 'mm';
+            svg.setAttribute('viewBox', `0 0 ${boardW} ${boardH}`);
+            svg.setAttribute('width', boardW + 'mm');
+            svg.setAttribute('height', boardH + 'mm');
+            document.getElementById('dynamic-print-style').innerHTML = `@page { size: ${boardW}mm ${boardH}mm; margin: 0; }`;
+
+            const totalBodyThick = boardThick * bodyLayers;
+            const effectiveWingLayers = wingLayers + (optMultiWingCovert ? 1 : 0);
+            const totalWingThick = boardThick * effectiveWingLayers;
+            globalSimBodyThick = totalBodyThick;
+            globalSimWingThick = totalWingThick;
+
+            document.getElementById('currentSpeciesBadge').innerText = `🦜 目前模板：${sp.name} (${sp.eng})`;
+            document.getElementById('canvasDimensionLabel').innerText = `板材：${boardW} × ${boardH} × ${boardThick.toFixed(1)} mm`;
+
+            const actualSlotWidth = Math.max(0.5, boardThick - kerfOffset);
+            const actualDowelDia = dowelDia > 0 ? Math.max(0.5, dowelDia - kerfOffset) : 0;
+            const bevelWidth = Math.max(3.5, Math.round(totalWingThick * 0.92 * 10) / 10);
+
+            document.getElementById('calc_bodyThick').innerText = `= ${totalBodyThick.toFixed(1)} mm`;
+            document.getElementById('calc_wingThick').innerText = `= ${(boardThick * wingLayers).toFixed(1)} mm ${optMultiWingCovert ? '(+覆羽層)' : ''}`;
+            document.getElementById('sim_thickBadge').innerText = `${sp.name} ｜ 總厚 ${totalBodyThick.toFixed(0)}mm`;
+
+            const bodyLen = parseFloat(document.getElementById('bodyLen').value);
+            const bodyHeight = parseFloat(document.getElementById('bodyHeight').value);
+            const wingSpan = parseFloat(document.getElementById('wingSpan').value);
+            const wingChord = parseFloat(document.getElementById('wingChord').value);
+            const holeDia = parseFloat(document.getElementById('holeDia').value);
+            const hingeOffset = parseFloat(document.getElementById('hingeOffset').value);
+            const showColor = document.getElementById('showColor').checked;
+
+            document.getElementById('val_bodyLen').innerText = bodyLen + ' mm';
+            document.getElementById('val_bodyHeight').innerText = bodyHeight + ' mm';
+            document.getElementById('val_wingSpan').innerText = wingSpan + ' mm';
+            document.getElementById('val_wingChord').innerText = wingChord + ' mm';
+            document.getElementById('val_holeDia').innerText = holeDia.toFixed(1) + ' mm';
+            document.getElementById('val_hingeOffset').innerText = hingeOffset + ' mm';
+
+            const r = holeDia / 2;
+            const dr = actualDowelDia / 2;
+
+            // 1. 建構鳥身群組 (支援外層彩繪層 & 中央穿線導槽夾心層)
+            function buildBodyGroup(bx, by, layerLabel, isCoreLayer) {
+                const h = bodyHeight;
+                const L = bodyLen;
+                const { bodyPath, beakLine, headLine, tailSlot } = getSpeciesBodyPaths(
+                    currentStyle, bx, by, L, h, actualSlotWidth, optSeparateTail && isCoreLayer
+                );
+
+                const eyeX = currentStyle === 'toucan' ? bx + L * 0.31 : (currentStyle === 'hummingbird' ? bx + L * 0.29 : bx + L * 0.15);
+                const eyeY = by + h * 0.34;
+                const cheekX = eyeX + L * 0.03;
+                const cheekY = by + h * 0.56;
+                const bodyHoleY = by + 4.5;
+                const cgX = bx + L * 0.34 + wingChord * 0.46;
+
+                let dowelHoles = '';
+                if (dowelDia > 0 && bodyLayers > 1) {
+                    const d1x = bx + L * 0.32, d1y = by + h * 0.56;
+                    const d2x = bx + L * 0.68, d2y = by + h * 0.40;
+                    dowelHoles = `
+                        <circle cx="${d1x}" cy="${d1y}" r="${dr}" class="dowel-line"/>
+                        <circle cx="${d2x}" cy="${d2y}" r="${dr}" class="dowel-line"/>
+                    `;
+                }
+
+                let coreChannel = '';
+                if (isCoreLayer && bodyLayers >= 3) {
+                    const slotW = holeDia + 0.6;
+                    coreChannel = `<rect x="${cgX - slotW / 2}" y="${by + 2.0}" width="${slotW}" height="${h - 4.0}" rx="${slotW / 2}" class="cut-line"/>`;
+                }
+
+                let colorOverlay = '';
+                if (showColor && !isCoreLayer) {
+                    colorOverlay = `
+                        <path d="${bodyPath}" fill="${sp.colors.body}" fill-opacity="0.18" stroke="none"/>
+                        <circle cx="${eyeX}" cy="${eyeY}" r="3.2" fill="#ffffff" stroke="#1e293b" stroke-width="0.3"/>
+                        <circle cx="${eyeX}" cy="${eyeY}" r="1.6" fill="#0f172a"/>
+                        <circle cx="${cheekX}" cy="${cheekY}" r="2.8" fill="${sp.colors.cheek}" fill-opacity="0.85"/>
+                    `;
+                }
+
+                return `
+                    <g>
+                        ${colorOverlay}
+                        <path d="${bodyPath}" class="cut-line"/>
+                        ${!isCoreLayer ? `
+                            <path d="${beakLine}" class="score-line"/>
+                            <path d="${headLine}" class="score-line"/>
+                            <circle cx="${eyeX}" cy="${eyeY}" r="3.2" class="score-line"/>
+                            <circle cx="${cheekX}" cy="${cheekY}" r="2.8" class="score-line"/>
+                        ` : ''}
+                        <circle cx="${bx + L * 0.34 + wingChord * 0.18}" cy="${bodyHoleY}" r="${r}" class="hole-line"/>
+                        <circle cx="${bx + L * 0.34 + wingChord * 0.78}" cy="${bodyHoleY}" r="${r}" class="hole-line"/>
+                        <line x1="${cgX}" y1="${by}" x2="${cgX}" y2="${by + h}" class="score-line"/>
+                        <circle cx="${cgX}" cy="${by + h - 3.5}" r="${r}" class="hole-line"/>
+                        ${dowelHoles}
+                        ${coreChannel}
+                        ${tailSlot}
+                        <text x="${bx + L * 0.30}" y="${by + h * 0.52}" class="guide-text" font-weight="bold">${layerLabel}</text>
+                        <text x="${bx + L * 0.30}" y="${by + h * 0.52 + 4.0}" class="guide-text">${sp.name} ｜ 板厚 ${boardThick}mm × 共 ${bodyLayers} 層</text>
+                    </g>
+                `;
+            }
+
+            // 2. 建構波浪飛羽主翼 & 上層多層次覆羽拼接片 (Covert Layer)
+            function buildWing(wx, wy, label, includeCovertOverlay) {
+                const C = wingChord, S = wingSpan;
+                const { path: wPath, vaneLines } = buildScallopedWingPath(wx, wy, C, S, sp.feathers, optScallopWing);
+                const tipLine = `M ${wx + 1.5} ${wy + S * 0.72} Q ${wx + C * 0.25} ${wy + S * 0.76} ${wx + C * 0.48} ${wy + S * 0.80}`;
+                const bevelLine = `M ${wx} ${wy + bevelWidth} L ${wx + C} ${wy + bevelWidth}`;
+                const h1x = wx + C * 0.18, h2x = wx + C * 0.78, hy = wy + 4.0;
+                const liftX = wx + C * 0.48, liftY = wy + 4.0 + hingeOffset;
+
+                let wingDowels = '';
+                if (dowelDia > 0 && (wingLayers > 1 || optMultiWingCovert)) {
+                    wingDowels = `
+                        <circle cx="${wx + C * 0.22}" cy="${wy + S * 0.25}" r="${dr}" class="dowel-line"/>
+                        <circle cx="${wx + C * 0.64}" cy="${wy + S * 0.25}" r="${dr}" class="dowel-line"/>
+                    `;
+                }
+
+                // 若開啟「多層次覆羽拼接」，在主翼上額外標示或於旁邊生成獨立覆羽片 (約佔翼展 52%)
+                let covertScoreOverlay = '';
+                if (includeCovertOverlay) {
+                    const { path: cPath } = buildScallopedWingPath(wx, wy, C * 0.92, S * 0.52, Math.max(3, sp.feathers - 2), true);
+                    covertScoreOverlay = `<path d="${cPath}" class="score-line"/>`;
+                }
+
+                let colorOverlay = '';
+                if (showColor) {
+                    colorOverlay = `
+                        <path d="${wPath}" fill="${sp.colors.wingTip}" fill-opacity="0.15" stroke="none"/>
+                        ${includeCovertOverlay ? `<path d="${buildScallopedWingPath(wx, wy, C * 0.92, S * 0.52, 4, true).path}" fill="${sp.colors.covert}" fill-opacity="0.28" stroke="none"/>` : ''}
+                    `;
+                }
+
+                return `
+                    <g>
+                        ${colorOverlay}
+                        <path d="${wPath}" class="cut-line"/>
+                        ${vaneLines}
+                        ${covertScoreOverlay}
+                        <path d="${tipLine}" class="score-line"/>
+                        <path d="${bevelLine}" class="score-line"/>
+                        <circle cx="${h1x}" cy="${hy}" r="${r}" class="hole-line"/>
+                        <circle cx="${h2x}" cy="${hy}" r="${r}" class="hole-line"/>
+                        <circle cx="${liftX}" cy="${liftY}" r="${r}" class="hole-line"/>
+                        ${wingDowels}
+                        <text x="${wx + 2.5}" y="${wy + bevelWidth + 3.2}" class="guide-text" fill="#1d4ed8">▲ 內緣斜磨 ${bevelWidth}mm</text>
+                        <text x="${wx + C * 0.08}" y="${wy + S * 0.42}" class="guide-text" font-weight="bold">${label}</text>
+                        <text x="${wx + C * 0.08}" y="${wy + S * 0.42 + 4.0}" class="guide-text">${S}×${C}mm (切 ${wingLayers} 片)</text>
+                    </g>
+                `;
+            }
+
+            // 獨立「上層覆羽拼接片 (Upper Covert Feather Layer)」切割件
+            function buildSeparateCovertPiece(cx, cy, label) {
+                const C = wingChord * 0.90;
+                const S = wingSpan * 0.50;
+                const { path: cPath, vaneLines } = buildScallopedWingPath(cx, cy, C, S, Math.max(4, sp.feathers - 2), true);
+                const h1x = cx + wingChord * 0.18, h2x = cx + wingChord * 0.78, hy = cy + 4.0;
+                const liftX = cx + wingChord * 0.48, liftY = cy + 4.0 + hingeOffset;
+
+                let dowels = '';
+                if (dowelDia > 0) {
+                    dowels = `
+                        <circle cx="${cx + wingChord * 0.22}" cy="${cy + wingSpan * 0.25}" r="${dr}" class="dowel-line"/>
+                        <circle cx="${cx + wingChord * 0.64}" cy="${cy + wingSpan * 0.25}" r="${dr}" class="dowel-line"/>
+                    `;
+                }
+
+                return `
+                    <g>
+                        ${showColor ? `<path d="${cPath}" fill="${sp.colors.covert}" fill-opacity="0.28" stroke="none"/>` : ''}
+                        <path d="${cPath}" class="cut-line"/>
+                        ${vaneLines}
+                        <circle cx="${h1x}" cy="${hy}" r="${r}" class="hole-line"/>
+                        <circle cx="${h2x}" cy="${hy}" r="${r}" class="hole-line"/>
+                        <circle cx="${liftX}" cy="${liftY}" r="${r}" class="hole-line"/>
+                        ${dowels}
+                        <text x="${cx + 4}" y="${cy + S * 0.48}" class="guide-text" font-weight="bold">${label}</text>
+                    </g>
+                `;
+            }
+
+            // 智慧排版引擎
+            let bodiesSvg = '';
+            let currentY = 28;
+            const marginX = 14;
+            const bottomReserve = 42;
+            const availH = boardH - currentY - bottomReserve;
+
+            let maxVerticalBodies = 1;
+            if (autoNestBody && bodyLayers > 1) {
+                const spaceForBodies = availH - (wingSpan + 12);
+                maxVerticalBodies = Math.max(1, Math.min(bodyLayers, Math.floor(spaceForBodies / (bodyHeight + 6))));
+            }
+
+            const bodyCols = (autoNestBody && boardW >= (bodyLen * 2 + 40)) ? 2 : 1;
+            let placedBodies = 0;
+            const targetBodiesToPlace = autoNestBody ? Math.min(bodyLayers, maxVerticalBodies * bodyCols) : 1;
+
+            for (let row = 0; row < maxVerticalBodies; row++) {
+                for (let col = 0; col < bodyCols; col++) {
+                    if (placedBodies >= targetBodiesToPlace) break;
+                    const bx = marginX + col * (bodyLen + 12);
+                    const by = currentY + row * (bodyHeight + 6.5);
+                    const isCore = (placedBodies >= 1 && bodyLayers >= 3);
+                    const label = (targetBodiesToPlace === 1)
+                        ? `鳥身主體 (Body) — 切 ${bodyLayers} 片疊合`
+                        : (placedBodies === 0)
+                            ? `鳥身外層 (Outer Body — 切 2 片)`
+                            : `鳥身夾心層 (Core Body — 含穿線槽與尾槽，切 ${Math.max(1, bodyLayers - 2)} 片)`;
+                    bodiesSvg += buildBodyGroup(bx, by, label, isCore);
+                    placedBodies++;
+                }
+            }
+
+            const usedBodyRows = Math.ceil(placedBodies / bodyCols);
+            const wingStartY = currentY + usedBodyRows * (bodyHeight + 6.5) + 3;
+
+            const leftWingX = marginX;
+            const rightWingX = marginX + wingChord + 10;
+
+            let wingsSvg = buildWing(leftWingX, wingStartY, "左主翼 (Left Wing)", optMultiWingCovert) +
+                           buildWing(rightWingX, wingStartY, "右主翼 (Right Wing)", optMultiWingCovert);
+
+            // 若開啟「獨立展開扇形尾羽」，排在翅膀右側或右上方空位
+            let tailSvg = '';
+            const rightSideX = rightWingX + wingChord + 8;
+            if (optSeparateTail) {
+                if (rightSideX + 55 <= boardW - 6) {
+                    tailSvg = buildSpreadTailGroup(rightSideX, wingStartY, sp, actualSlotWidth, r, showColor);
+                } else {
+                    // 若為 A4 窄版 (210mm)，將扇尾精巧排在鳥身右側或雙翼下方空檔
+                    const tailX = Math.min(boardW - 62, rightWingX + wingChord * 0.42);
+                    const tailY = Math.min(boardH - 74, wingStartY + wingSpan * 0.66);
+                    tailSvg = buildSpreadTailGroup(tailX, tailY, sp, actualSlotWidth, r, showColor);
+                }
+            }
+
+            // 若開啟「上層覆羽拼接片」且板寬 >= 280mm，額外在右側排入獨立左/右覆羽切割件
+            let covertPiecesSvg = '';
+            if (optMultiWingCovert && (rightSideX + 60 <= boardW - 8)) {
+                const covY = wingStartY + (optSeparateTail ? 48 : 0);
+                covertPiecesSvg = buildSeparateCovertPiece(rightSideX, covY, "上層覆羽片 × 2");
+            }
+
+            // 邊界檢查
+            const maxUsedW = Math.max(marginX + bodyCols * bodyLen, rightWingX + wingChord + 8);
+            const maxUsedH = wingStartY + wingSpan + bottomReserve;
+            const isOutOfBounds = (maxUsedW > boardW) || (maxUsedH > boardH);
+            document.getElementById('fitWarningBadge').classList.toggle('hidden', !isOutOfBounds);
+
+            document.getElementById('bevelHint').innerHTML = `
+                💡 <b>${sp.name} 1:1 排料摘要</b>：<br>
+                ▸ <b>板面配置</b>：已排入 <b>${placedBodies} 組鳥身</b>、<b>左右波浪主翼</b>${optSeparateTail ? '、<b>獨立展開扇尾</b>' : ''}${optMultiWingCovert ? ' 與 <b>覆羽拼接線</b>' : ''}。<br>
+                ▸ <b>緊配卡槽實繪</b>：<b>${actualSlotWidth.toFixed(2)} mm</b> (Kerf -${kerfOffset.toFixed(2)}mm) ｜ <b>斜磨寬度</b>：<b>${bevelWidth} mm</b>
+            `;
+
+            // 底部支撐橫桿 & 羅盤星芒配重圓盤
+            const barX = marginX, barY = boardH - 27, barLen = Math.min(108, boardW - 78), barH = 14.5;
+            const barHoleSpan = totalBodyThick + (hingeOffset * 2);
+            const scaleX = Math.max(marginX, boardW - 64);
+
+            // 羅盤八芒星雷雕圖案 (對應截圖中配重圓盤上的星芒羅盤紋飾)
+            function buildCompassStar(cx, cy) {
+                if (!optCompassWeight) return '';
+                return `
+                    <circle cx="${cx}" cy="${cy}" r="8.2" class="score-line"/>
+                    <path d="M ${cx} ${cy - 7.5} L ${cx + 1.6} ${cy - 1.6} L ${cx + 7.5} ${cy} L ${cx + 1.6} ${cy + 1.6} L ${cx} ${cy + 7.5} L ${cx - 1.6} ${cy + 1.6} L ${cx - 7.5} ${cy} L ${cx - 1.6} ${cy - 1.6} Z" class="score-line"/>
+                `;
+            }
+
+            svg.innerHTML = `
+                <!-- 板材安全外框 -->
+                <rect x="5" y="5" width="${boardW - 10}" height="${boardH - 10}" fill="none" stroke="#94a3b8" stroke-width="0.3" stroke-dasharray="2,2"/>
+                <text x="11" y="12.5" font-family="sans-serif" font-size="3.7" font-weight="bold" fill="#0f172a">
+                    魔法木鳥 1:1 原尺寸模板 【${sp.name} ${sp.eng}】 — 板材 ${boardW}×${boardH}×${boardThick}mm (Kerf -${kerfOffset.toFixed(2)}mm)
+                </text>
+                <text x="11" y="17.2" class="guide-text">
+                    紅實線：切割外框 ｜ 藍虛線：彩繪分色/羽軸/斜磨線(${bevelWidth}mm) ｜ 綠圈：穿線關節孔(Ø${holeDia.toFixed(1)}mm) ｜ 紫線：竹籤定位銷與緊配卡槽(${actualSlotWidth.toFixed(2)}mm)
+                </text>
+
+                <!-- 50mm 與 1英吋 雙制式 1:1 比例確認尺 -->
+                <g transform="translate(${scaleX}, 9)">
+                    <rect x="0" y="0" width="50" height="6.2" fill="#f8fafc" stroke="#0f172a" stroke-width="0.4"/>
+                    <line x1="10" y1="0" x2="10" y2="2.5" stroke="#0f172a" stroke-width="0.3"/>
+                    <line x1="20" y1="0" x2="20" y2="2.5" stroke="#0f172a" stroke-width="0.3"/>
+                    <line x1="25.4" y1="0" x2="25.4" y2="6.2" stroke="#dc2626" stroke-width="0.35"/>
+                    <line x1="30" y1="0" x2="30" y2="2.5" stroke="#0f172a" stroke-width="0.3"/>
+                    <line x1="40" y1="0" x2="40" y2="2.5" stroke="#0f172a" stroke-width="0.3"/>
+                    <text x="3" y="4.8" font-family="sans-serif" font-size="2.7" font-weight="bold" fill="#0f172a">1 inch (25.4mm) ｜ 50 mm 比例尺</text>
+                </g>
+
+                <!-- 鳥身區塊 -->
+                ${bodiesSvg}
+
+                <!-- 左右波浪主翼區塊 -->
+                ${wingsSvg}
+
+                <!-- 獨立展開扇形尾羽 & 覆羽片 -->
+                ${tailSvg}
+                ${covertPiecesSvg}
+
+                <!-- 頂部平衡支撐橫桿 -->
+                <g transform="translate(${barX}, ${barY})">
+                    <rect x="0" y="0" width="${barLen}" height="${barH}" rx="7" ry="7" class="cut-line"/>
+                    <circle cx="${barLen / 2}" cy="3.8" r="${r}" class="hole-line"/>
+                    <circle cx="${barLen / 2 - barHoleSpan / 2}" cy="${barH - 3.8}" r="${r}" class="hole-line"/>
+                    <circle cx="${barLen / 2 + barHoleSpan / 2}" cy="${barH - 3.8}" r="${r}" class="hole-line"/>
+                    <rect x="${barLen / 2 - actualSlotWidth / 2}" y="${barH - 4.8}" width="${actualSlotWidth}" height="4.8" class="dowel-line"/>
+                    <text x="6" y="8.2" class="guide-text" font-weight="bold">支撐橫桿 (Support Bar) × 1 (跨距 ${barHoleSpan.toFixed(1)}mm)</text>
+                </g>
+
+                <!-- 羅盤星芒 3D 十字對插配重圓盤 -->
+                <g transform="translate(${barX + barLen + 6}, ${barY - 3.5})">
+                    <circle cx="11" cy="11" r="10.5" class="cut-line"/>
+                    ${buildCompassStar(11, 11)}
+                    <rect x="${11 - actualSlotWidth / 2}" y="0.5" width="${actualSlotWidth}" height="10.5" class="dowel-line"/>
+                    <circle cx="11" cy="16.5" r="${r}" class="hole-line"/>
+                    
+                    <g transform="translate(24, 0)">
+                        <circle cx="11" cy="11" r="10.5" class="cut-line"/>
+                        ${buildCompassStar(11, 11)}
+                        <rect x="${11 - actualSlotWidth / 2}" y="11" width="${actualSlotWidth}" height="10.5" class="dowel-line"/>
+                        <circle cx="11" cy="5.5" r="${r}" class="hole-line"/>
+                    </g>
+                    <text x="-2" y="25" class="guide-text" font-weight="bold" fill="#7e22ce">羅盤配重盤 (Weight) × 1 組</text>
+                </g>
+            `;
+        }
+
+        // 動態連桿振翅物理模擬器 (同步呈現目前選取鳥種的配色與羅盤配重盤)
+        let simAngle = 0;
+        function animateSimulation() {
+            simAngle += 0.055;
+            const pull = Math.sin(simAngle);
+            const bodyY = pull * 15;
+            const wingDeg = -pull * 33;
+
+            const sp = speciesCatalog[currentStyle] || speciesCatalog.macaw;
+            const halfBodyW = Math.max(4.5, globalSimBodyThick / 2);
+            const wingT = Math.max(2.2, globalSimWingThick * 0.6);
+
+            const simSvg = document.getElementById('simSvg');
+            if (simSvg) {
+                simSvg.innerHTML = `
+                    <!-- 頂部支撐橫桿 -->
+                    <rect x="-52" y="-76" width="104" height="6" rx="3" fill="#d6c7b2" stroke="#8c6d46" stroke-width="0.8"/>
+                    <!-- 外側懸吊雙線 -->
+                    <line x1="${-(halfBodyW + 14)}" y1="-70" x2="${-(halfBodyW + 14)}" y2="${bodyY - 4}" stroke="#fde68a" stroke-width="1.1" stroke-dasharray="2,2"/>
+                    <line x1="${halfBodyW + 14}" y1="-70" x2="${halfBodyW + 14}" y2="${bodyY - 4}" stroke="#fde68a" stroke-width="1.1" stroke-dasharray="2,2"/>
+                    
+                    <!-- 中央驅動拉繩 + 羅盤星芒配重圓盤 -->
+                    <line x1="0" y1="${bodyY + 11}" x2="0" y2="${54 + bodyY}" stroke="#f59e0b" stroke-width="1.6"/>
+                    <g transform="translate(0, ${62 + bodyY})">
+                        <circle cx="0" cy="0" r="8.5" fill="#d97706" stroke="#fef3c7" stroke-width="1"/>
+                        <path d="M0,-6 L1.5,-1.5 L6,0 L1.5,1.5 L0,6 L-1.5,1.5 L-6,0 L-1.5,-1.5 Z" fill="#fef3c7"/>
+                    </g>
+
+                    <!-- 左翼 (雙層覆羽漸層) -->
+                    <g transform="translate(${-halfBodyW}, ${bodyY}) rotate(${wingDeg})">
+                        <path d="M 0 0 L -88 -5 Q -68 9 0 ${wingT + 2} Z" fill="${sp.colors.wingTip}" stroke="#fef08a" stroke-width="0.7"/>
+                        <path d="M 0 -1 L -48 -3 Q -36 5 0 ${wingT} Z" fill="${sp.colors.covert}"/>
+                        <circle cx="-14" cy="0" r="2" fill="#38bdf8"/>
+                    </g>
+
+                    <!-- 右翼 (雙層覆羽漸層) -->
+                    <g transform="translate(${halfBodyW}, ${bodyY}) rotate(${-wingDeg})">
+                        <path d="M 0 0 L 88 -5 Q 68 9 0 ${wingT + 2} Z" fill="${sp.colors.wingTip}" stroke="#fef08a" stroke-width="0.7"/>
+                        <path d="M 0 -1 L 48 -3 Q 36 5 0 ${wingT} Z" fill="${sp.colors.covert}"/>
+                        <circle cx="14" cy="0" r="2" fill="#38bdf8"/>
+                    </g>
+
+                    <!-- 鳥身剖面 -->
+                    <rect x="${-halfBodyW}" y="${bodyY - 4}" width="${halfBodyW * 2}" height="20" rx="5" fill="${sp.colors.body}" stroke="#fef3c7" stroke-width="1"/>
+                    <circle cx="${-halfBodyW}" cy="${bodyY}" r="1.8" fill="#10b981"/>
+                    <circle cx="${halfBodyW}" cy="${bodyY}" r="1.8" fill="#10b981"/>
+                `;
+            }
+            requestAnimationFrame(animateSimulation);
+        }
+
+        function downloadSVG() {
+            const boardW = document.getElementById('boardWidth').value;
+            const boardH = document.getElementById('boardHeight').value;
+            const boardThick = document.getElementById('boardThick').value;
+            const kerfOffset = parseFloat(document.getElementById('kerfOffset').value).toFixed(2);
+            const svgEl = document.getElementById('templateSvg');
+            const serializer = new XMLSerializer();
+            let source = serializer.serializeToString(svgEl);
+            if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+                source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+            }
+            source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
+            const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `magic_wooden_bird_${currentStyle}_${boardW}x${boardH}x${boardThick}mm_kerf${kerfOffset}.svg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        /**
+         * 將目前 SVG 畫布中的所有幾何圖元 (Path, Circle, Rect, Line) 解析並匯出為標準 AutoCAD R12 DXF 1:1 檔案
+         * 自動依圖層分類：CUT (紅/ACI 1)、SCORE (藍/ACI 5)、HOLE (綠/ACI 3)、DOWEL_SLOT (紫/ACI 6)
+         */
+        function downloadDXF() {
+            const boardW = parseFloat(document.getElementById('boardWidth').value) || 210;
+            const boardH = parseFloat(document.getElementById('boardHeight').value) || 297;
+            const boardThick = document.getElementById('boardThick').value;
+            const kerfOffset = parseFloat(document.getElementById('kerfOffset').value).toFixed(2);
+            const svgEl = document.getElementById('templateSvg');
+
+            let dxf = [];
+            const pushGroup = (code, val) => {
+                dxf.push(String(code).trim());
+                dxf.push(String(val).trim());
+            };
+
+            // 1. HEADER 區段 (設定公制單位 mm = 4)
+            pushGroup(0, 'SECTION');
+            pushGroup(2, 'HEADER');
+            pushGroup(9, '$ACADVER');
+            pushGroup(1, 'AC1009');
+            pushGroup(9, '$INSUNITS');
+            pushGroup(70, 4);
+            pushGroup(0, 'ENDSEC');
+
+            // 2. TABLES 區段 (定義四色標準工程圖層)
+            pushGroup(0, 'SECTION');
+            pushGroup(2, 'TABLES');
+            pushGroup(0, 'TABLE');
+            pushGroup(2, 'LTYPE');
+            pushGroup(70, 1);
+            pushGroup(0, 'LTYPE');
+            pushGroup(2, 'CONTINUOUS');
+            pushGroup(70, 0);
+            pushGroup(3, 'Solid line');
+            pushGroup(72, 65);
+            pushGroup(73, 0);
+            pushGroup(40, 0.0);
+            pushGroup(0, 'ENDTAB');
+
+            pushGroup(0, 'TABLE');
+            pushGroup(2, 'LAYER');
+            pushGroup(70, 5);
+            const layers = [
+                { name: '0', color: 7 },
+                { name: 'CUT', color: 1 },        // 紅色：外框切割線
+                { name: 'SCORE', color: 5 },      // 藍色：彩繪分色與斜磨基準線
+                { name: 'HOLE', color: 3 },       // 綠色：五金與穿線孔
+                { name: 'DOWEL_SLOT', color: 6 }  // 紫色：竹籤定位銷與緊配卡槽
+            ];
+            layers.forEach(lay => {
+                pushGroup(0, 'LAYER');
+                pushGroup(2, lay.name);
+                pushGroup(70, 0);
+                pushGroup(62, lay.color);
+                pushGroup(6, 'CONTINUOUS');
+            });
+            pushGroup(0, 'ENDTAB');
+            pushGroup(0, 'ENDSEC');
+
+            // 3. ENTITIES 區段
+            pushGroup(0, 'SECTION');
+            pushGroup(2, 'ENTITIES');
+
+            // 輔助函式：計算元素累計的 translate(x, y) 偏移量
+            function getCumulativeOffset(el) {
+                let tx = 0, ty = 0;
+                let cur = el;
+                while (cur && cur !== svgEl) {
+                    const tf = cur.getAttribute && cur.getAttribute('transform');
+                    if (tf) {
+                        const m = tf.match(/translate\(\s*([+-]?\d*\.?\d+)\s*(?:,\s*([+-]?\d*\.?\d+))?\s*\)/);
+                        if (m) {
+                            tx += parseFloat(m[1]) || 0;
+                            ty += parseFloat(m[2]) || 0;
+                        }
+                    }
+                    cur = cur.parentNode;
+                }
+                return { tx, ty };
+            }
+
+            // 輔助函式：判斷圖層名稱 (過濾掉純填色預覽色塊)
+            function resolveLayer(el) {
+                const cls = el.getAttribute('class') || '';
+                if (cls.includes('cut-line')) return 'CUT';
+                if (cls.includes('score-line')) return 'SCORE';
+                if (cls.includes('hole-line')) return 'HOLE';
+                if (cls.includes('dowel-line')) return 'DOWEL_SLOT';
+                return null;
+            }
+
+            // SVG Y 軸向下，DXF Y 軸向上：轉換座標 y_dxf = boardH - y_svg
+            const toDxfY = (y) => +(boardH - y).toFixed(4);
+            const toDxfX = (x) => +x.toFixed(4);
+
+            // 寫入 DXF LINE
+            function writeDxfLine(layer, x1, y1, x2, y2) {
+                pushGroup(0, 'LINE');
+                pushGroup(8, layer);
+                pushGroup(10, toDxfX(x1));
+                pushGroup(20, toDxfY(y1));
+                pushGroup(30, 0.0);
+                pushGroup(11, toDxfX(x2));
+                pushGroup(21, toDxfY(y2));
+                pushGroup(31, 0.0);
+            }
+
+            // 寫入 DXF CIRCLE
+            function writeDxfCircle(layer, cx, cy, r) {
+                pushGroup(0, 'CIRCLE');
+                pushGroup(8, layer);
+                pushGroup(10, toDxfX(cx));
+                pushGroup(20, toDxfY(cy));
+                pushGroup(30, 0.0);
+                pushGroup(40, +r.toFixed(4));
+            }
+
+            // 寫入 DXF POLYLINE (相容所有雷切與 CAD 軟體)
+            function writeDxfPolyline(layer, pts, closed) {
+                if (pts.length < 2) return;
+                pushGroup(0, 'POLYLINE');
+                pushGroup(8, layer);
+                pushGroup(66, 1);
+                pushGroup(10, 0.0);
+                pushGroup(20, 0.0);
+                pushGroup(30, 0.0);
+                pushGroup(70, closed ? 1 : 0);
+                pts.forEach(p => {
+                    pushGroup(0, 'VERTEX');
+                    pushGroup(8, layer);
+                    pushGroup(10, toDxfX(p.x));
+                    pushGroup(20, toDxfY(p.y));
+                    pushGroup(30, 0.0);
+                });
+                pushGroup(0, 'SEQEND');
+                pushGroup(8, layer);
+            }
+
+            // 解析並轉換所有 <circle>
+            svgEl.querySelectorAll('circle').forEach(el => {
+                const layer = resolveLayer(el);
+                if (!layer) return;
+                const { tx, ty } = getCumulativeOffset(el);
+                const cx = (parseFloat(el.getAttribute('cx')) || 0) + tx;
+                const cy = (parseFloat(el.getAttribute('cy')) || 0) + ty;
+                const r = parseFloat(el.getAttribute('r')) || 0;
+                if (r > 0) writeDxfCircle(layer, cx, cy, r);
+            });
+
+            // 解析並轉換所有 <line>
+            svgEl.querySelectorAll('line').forEach(el => {
+                const layer = resolveLayer(el);
+                if (!layer) return;
+                const { tx, ty } = getCumulativeOffset(el);
+                const x1 = (parseFloat(el.getAttribute('x1')) || 0) + tx;
+                const y1 = (parseFloat(el.getAttribute('y1')) || 0) + ty;
+                const x2 = (parseFloat(el.getAttribute('x2')) || 0) + tx;
+                const y2 = (parseFloat(el.getAttribute('y2')) || 0) + ty;
+                writeDxfLine(layer, x1, y1, x2, y2);
+            });
+
+            // 解析並轉換所有 <rect> (支援圓角矩形細分)
+            svgEl.querySelectorAll('rect').forEach(el => {
+                const layer = resolveLayer(el);
+                if (!layer) return;
+                const { tx, ty } = getCumulativeOffset(el);
+                const x = (parseFloat(el.getAttribute('x')) || 0) + tx;
+                const y = (parseFloat(el.getAttribute('y')) || 0) + ty;
+                const w = parseFloat(el.getAttribute('width')) || 0;
+                const h = parseFloat(el.getAttribute('height')) || 0;
+                const rx = Math.min(parseFloat(el.getAttribute('rx')) || 0, w / 2, h / 2);
+
+                if (rx <= 0.1) {
+                    writeDxfPolyline(layer, [
+                        { x: x, y: y },
+                        { x: x + w, y: y },
+                        { x: x + w, y: y + h },
+                        { x: x, y: y + h }
+                    ], true);
+                } else {
+                    // 圓角矩形離散為高密度多段線
+                    const pts = [];
+                    const segs = 8;
+                    const corners = [
+                        { cx: x + w - rx, cy: y + rx, startAng: -Math.PI / 2, endAng: 0 },
+                        { cx: x + w - rx, cy: y + h - rx, startAng: 0, endAng: Math.PI / 2 },
+                        { cx: x + rx, cy: y + h - rx, startAng: Math.PI / 2, endAng: Math.PI },
+                        { cx: x + rx, cy: y + rx, startAng: Math.PI, endAng: Math.PI * 1.5 }
+                    ];
+                    corners.forEach(c => {
+                        for (let i = 0; i <= segs; i++) {
+                            const ang = c.startAng + (c.endAng - c.startAng) * (i / segs);
+                            pts.push({
+                                x: c.cx + rx * Math.cos(ang),
+                                y: c.cy + rx * Math.sin(ang)
+                            });
+                        }
+                    });
+                    writeDxfPolyline(layer, pts, true);
+                }
+            });
+
+            // 解析並轉換所有 <path> (運用瀏覽器原生 SVGPathElement.getPointAtLength 高精度取樣貝茲曲線)
+            svgEl.querySelectorAll('path').forEach(el => {
+                const layer = resolveLayer(el);
+                if (!layer) return;
+                const dAttr = (el.getAttribute('d') || '').trim();
+                if (!dAttr) return;
+                const { tx, ty } = getCumulativeOffset(el);
+                const isClosed = /Z\s*$/i.test(dAttr);
+                const totalLen = el.getTotalLength();
+                if (totalLen <= 0) return;
+
+                // 每 0.8mm 取樣一個頂點，確保鳥身曲線與波浪飛羽平滑精準
+                const steps = Math.max(16, Math.min(360, Math.ceil(totalLen / 0.8)));
+                const pts = [];
+                for (let i = 0; i <= steps; i++) {
+                    if (isClosed && i === steps) break;
+                    const pt = el.getPointAtLength((i / steps) * totalLen);
+                    pts.push({ x: pt.x + tx, y: pt.y + ty });
+                }
+                writeDxfPolyline(layer, pts, isClosed);
+            });
+
+            pushGroup(0, 'ENDSEC');
+            pushGroup(0, 'EOF');
+
+            const dxfContent = dxf.join('\r\n') + '\r\n';
+            const blob = new Blob([dxfContent], { type: 'application/dxf;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `magic_wooden_bird_${currentStyle}_${boardW}x${boardH}x${boardThick}mm_kerf${kerfOffset}.dxf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        window.onload = () => {
+            renderSpeciesCards();
+            selectSpecies('macaw');
+            onThickChange();
+            animateSimulation();
+        };
+    </script>
+</body>
+</html>
